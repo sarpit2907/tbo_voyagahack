@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 
 const Book = () => {
-const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 0 });
+  const [travellers, setTravellers] = useState({
+    adults: 1,
+    children: 0,
+    infants: 0,
+  });
   const [travelClass, setTravelClass] = useState("Economy");
   const [showTravellerDropdown, setShowTravellerDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [flights, setFlights] = useState([{ from: "", to: "" }]);
+
   const incrementTraveller = (type) => {
     setTravellers({ ...travellers, [type]: travellers[type] + 1 });
   };
@@ -25,26 +30,31 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
     setFlights([...flights, { from: "", to: "" }]);
   };
 
-  const updateTravelerCount = (type, operation) => {
-    setTravellers((prev) => ({
-      ...prev,
-      [type]:
-        operation === "increment"
-          ? prev[type] + 1
-          : Math.max(0, prev[type] - 1),
-    }));
-  };
+  // const updateTravelerCount = (type, operation) => {
+  //   setTravellers((prev) => ({
+  //     ...prev,
+  //     [type]:
+  //       operation === "increment"
+  //         ? prev[type] + 1
+  //         : Math.max(0, prev[type] - 1),
+  //   }));
+  // };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center ">
+    <div className="min-h-screen bg-[#DDDDDD] flex flex-col items-center ">
       {/* Header */}
-      <header className="w-full text-white py-6 flex items-center justify-between px-6">
+      <header className="w-full bg-white text-white py-6 flex items-center justify-between px-6 z-50">
         <img src="/logo.svg" alt="Logo" className="h-10 w-auto pl-10" />
         <img src="/account.svg" alt="Account" className="h-10 w-auto pr-10" />
       </header>
 
+      <div className="absolute w-full h-20 bg-blue-500 top-20"></div>
+      <div className="absolute w-0 h-0 border-l-[50vw] border-l-transparent border-r-[50vw] border-r-transparent border-t-[40vh] border-t-blue-500 z-0 top-40"></div>
+
+      <div className="absolute top-28 right-56 w-40 h-40 bg-orange-500 rounded-full z-10"></div>
+
       {/* Search Form */}
-      <div className="bg-white shadow-2xl rounded-custom-40 p-8 mt-8 w-3/4 pl-20 pr-20">
+      <div className="mt-20 bg-white shadow-lg rounded-custom-40 px-8 pt-8 w-3/4 pl-20 pr-20 z-50 mb-20">
         {flights.map((flight, index) => (
           <div key={index} className="flex flex-col justify-between mb-4">
             <div className="relative w-full">
@@ -84,14 +94,29 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
 
         <div className="flex justify-between mb-4">
           <div className="relative flex-1 mr-2">
-            <label className="block text-sm font-semibold text-gray-700">Travellers</label>
+            <label className="absolute -top-2 left-2 bg-white px-1 text-sm font-semibold text-gray-700">
+              Travellers
+            </label>
             <button
               className="w-full flex items-center justify-between border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => setShowTravellerDropdown(!showTravellerDropdown)}
             >
-              <span className="font-bold">{travellers.adults > 0 ? `${travellers.adults} Adult${travellers.adults > 1 ? "s" : ""}` : ""}
-              {travellers.children > 0 ? `, ${travellers.children} Child${travellers.children > 1 ? "ren" : ""}` : ""}
-              {travellers.infants > 0 ? `, ${travellers.infants} Infant${travellers.infants > 1 ? "s" : ""}` : ""}
+              <span className="font-bold">
+                {travellers.adults > 0
+                  ? `${travellers.adults} Adult${
+                      travellers.adults > 1 ? "s" : ""
+                    }`
+                  : ""}
+                {travellers.children > 0
+                  ? `, ${travellers.children} Child${
+                      travellers.children > 1 ? "ren" : ""
+                    }`
+                  : ""}
+                {travellers.infants > 0
+                  ? `, ${travellers.infants} Infant${
+                      travellers.infants > 1 ? "s" : ""
+                    }`
+                  : ""}
               </span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -119,7 +144,9 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
                       >
                         -
                       </button>
-                      <span className="px-4 text-sm font-bold">{travellers.adults}</span>
+                      <span className="px-4 text-sm font-bold">
+                        {travellers.adults}
+                      </span>
                       <button
                         className="border border-gray-300 px-1 py-1 mr-1"
                         onClick={() => incrementTraveller("adults")}
@@ -138,7 +165,9 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
                       >
                         -
                       </button>
-                      <span className="px-4 text-lg font-bold">{travellers.children}</span>
+                      <span className="px-4 text-lg font-bold">
+                        {travellers.children}
+                      </span>
                       <button
                         className="border border-gray-300 px-1 py-1 mr-1"
                         onClick={() => incrementTraveller("children")}
@@ -157,7 +186,9 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
                       >
                         -
                       </button>
-                      <span className="px-4 text-lg font-bold">{travellers.infants}</span>
+                      <span className="px-4 text-lg font-bold">
+                        {travellers.infants}
+                      </span>
                       <button
                         className="border border-gray-300 px-1 py-1 mr-1"
                         onClick={() => incrementTraveller("infants")}
@@ -172,7 +203,9 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
           </div>
 
           <div className="relative flex-1 ml-2">
-            <label className="block text-sm font-semibold text-gray-700">Travel Class</label>
+            <label className="absolute -top-2 left-2 bg-white px-1 text-sm font-semibold text-gray-700">
+              Travel Class
+            </label>
             <button
               className="w-full flex items-center justify-between border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => setShowClassDropdown(!showClassDropdown)}
@@ -193,25 +226,35 @@ const [travellers, setTravellers] = useState({ adults: 1, children: 0, infants: 
             </button>
             {showClassDropdown && (
               <div className="absolute bg-white border border-gray-300 rounded-md mt-2 shadow-lg w-full z-10">
-                {["Economy", "Premium Economy", "Business", "First Class"].map((cls) => (
-                  <div
-                    key={cls}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => selectClass(cls)}
-                  >
-                    {cls}
-                  </div>
-                ))}
+                {["Economy", "Premium Economy", "Business", "First Class"].map(
+                  (cls) => (
+                    <div
+                      key={cls}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => selectClass(cls)}
+                    >
+                      {cls}
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
-        
-        <button
-          className="w-full bg-blue-600 text-white py-3 rounded-md shadow-md hover:bg-blue-700 focus:outline-none"
-        >
-          Search Flights
-        </button>
+        <div className="flex justify-center items-center">
+          <button className="w-1/4 bg-blue-600 text-white py-3 shadow-md hover:bg-blue-700 focus:outline-none rounded-3xl relative -bottom-6">
+            Search Flights
+          </button>
+        </div>
+        <div className="absolute bottom-16 -left-24 w-40 h-40 bg-blue-500 rounded-full z-10"></div>
+      </div>
+      {/* Footer */}
+      <div className="relative mt-20 w-full bottom-0">
+        <footer className="bottom-0 bg-gray-800 text-white py-6 w-full ">
+          <div className="container mx-auto px-6 text-center">
+            <p>&copy; 2025 TravelNow. All rights reserved.</p>
+          </div>
+        </footer>
       </div>
     </div>
   );
