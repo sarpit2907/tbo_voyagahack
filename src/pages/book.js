@@ -41,7 +41,7 @@ const Book = () => {
   // };
 
   return (
-    <div className="min-h-screen bg-[#DDDDDD] flex flex-col items-center ">
+    <div className="min-h-screen bg-[#DDDDDD] flex flex-col items-center justify-between">
       {/* Header */}
       <header className="w-full bg-white text-white py-6 flex items-center justify-between px-6 z-50">
         <img src="/logo.svg" alt="Logo" className="h-10 w-auto pl-10" />
