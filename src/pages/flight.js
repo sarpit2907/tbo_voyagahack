@@ -1,10 +1,16 @@
 import React, { useState } from "react";
+import { useDetails } from "./context";
 
 const Flight = () => {
+  const {travellers, source, destination } =
+    useDetails();
   const [activeBtn, setActiveBtn] = useState("1");
-  const [flights, setFlights] = useState(["arin", "1232"]);
-  const [destinations, setDestinations] = useState(["VNS", "BLR"]);
-  const [activeDstn, setActiveDstn] = useState("VNS");
+  const [availableFlights, setAvailableFlights] = useState([]);
+  const flights = [];
+  for (let i = 0; i < source.length; i++) {
+    flights.push({ from: source[i], to: destination[i] });
+  }
+  const [activeDstn, setActiveDstn] = useState(flights[0]?.to || "");
 
   const toggleBtn = (btn) => {
     setActiveBtn(btn);
@@ -16,25 +22,27 @@ const Flight = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ flightId: "1234" }),
+      body: JSON.stringify({ flightId: "1234", travellers }),
     });
     const data = await response.json();
     console.log(data);
   };
 
-  const fetchDestinations = async () => {
-    const response = await fetch("http://localhost:3000/api/destinations");
-    const data = await response.json();
-    setDestinations(data);
-  };
-
   const fetchFlightsByDestination = async (destination) => {
     setActiveDstn(destination);
-    setFlights([1, 2]);
+    const response = await fetch("http://localhost:3000/api/flights", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ destination }),
+    });
+    const data = await response.json();
+    if (data) setAvailableFlights(data);
   };
 
   return (
-    <div className="min-h-screen min-w-screen bg-[#DDDDDD] flex-col realtive">
+    <div className="min-h-screen min-w-screen bg-[#DDDDDD] flex-col relative">
       <div className="z-20 absolute w-full mt-32">
         <div className="flex shadow-lg rounded-3xl bg-[#DDDDDD] w-3/5 mx-auto font-bold justify-center">
           <button
@@ -72,23 +80,26 @@ const Flight = () => {
         <div className="w-full mt-6">
           {/* Conditionally rendered content based on activeBtn */}
           {activeBtn === "2" && (
-            <div className=" w-full flex flex-col items-center">
+            <div className="w-full flex flex-col items-center">
               <p>Select Your Itinerary</p>
               <p className="text-2xl">Showing Results For</p>
 
               <div className="flex space-x-5 my-5">
-                {destinations.map((destination, index) => (
+                {flights.map((flight, index) => (
                   <button
                     key={index}
                     className={`${
-                      activeDstn === destination
+                      activeDstn === flight.to
                         ? "bg-blue-700 text-white"
                         : "bg-white text-black"
                     } rounded-md px-4 py-2 transition-colors duration-200`}
-                    onClick={() => fetchFlightsByDestination(destination)}
+                    onClick={() => {
+                      fetchFlightsByDestination(flight.to);
+                      // updateSourceDestination(flight.from, flight.to); // Update source and destination
+                    }}
                   >
                     <p className="text-3xl">
-                      {destination}-{destination}
+                      {flight.from}-{flight.to}
                     </p>
                     <span className="text-s">Tuesday,8/11/2002</span>
                   </button>
@@ -103,8 +114,7 @@ const Flight = () => {
                   <p>Arrival</p>
                   <p>Price</p>
                 </div>
-
-                {flights.map((flight, index) => (
+                {availableFlights.map((flight, index) => (
                   <div
                     key={index}
                     className="w-3/4 bg-white flex items-center justify-between font-bold rounded-md pr-10"
@@ -142,7 +152,7 @@ const Flight = () => {
                       <span className="text-xl font-bold">₹22,224</span>
                       <button
                         className="bg-red-600 text-white rounded-md h-8 px-2 py-1"
-                        onClick={bookTickets()}
+                        onClick={bookTickets}
                       >
                         Book
                       </button>
@@ -153,13 +163,13 @@ const Flight = () => {
             </div>
           )}
           {activeBtn === "1" && (
-            <div className=" w-full flex flex-col items-center">
+            <div className="w-full flex flex-col items-center">
               <p>Select Your Itinerary</p>
               <p className="text-2xl">Showing Results For</p>
             </div>
           )}
           {activeBtn === "3" && (
-            <div className=" w-full flex flex-col items-center">
+            <div className="w-full flex flex-col items-center">
               <p>Select Your Itinerary</p>
               <p className="text-2xl">Showing Results For</p>
             </div>
@@ -167,7 +177,7 @@ const Flight = () => {
         </div>
       </div>
       <img
-        className="absolute bottom-[26.8rem] left-0 w-full -z-0"
+        className="absolute bottom-[32.5rem] left-0 w-full -z-0"
         src="/hero.svg"
         alt="Hero Curve"
       />

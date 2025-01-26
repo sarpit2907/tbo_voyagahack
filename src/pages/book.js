@@ -1,12 +1,22 @@
 import React, { useState } from "react";
 import { useDetails } from "./context";
+import { Link } from "react-router-dom";
 
 const Book = () => {
-  const {source, setSource, destination, setDestination, travellers, setTravellers}=useDetails();
+  const {
+    source,
+    setSource,
+    destination,
+    setDestination,
+    travellers,
+    setTravellers,
+  } = useDetails();
   const [activeTab, setActiveTab] = useState("flights");
   const [showTravellerDropdown, setShowTravellerDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [flights, setFlights] = useState([{ from: "", to: "" }]);
+  console.log(travellers);
+  console.log(flights);
 
   const incrementTraveller = (type) => {
     setTravellers({ ...travellers, [type]: travellers[type] + 1 });
@@ -20,25 +30,39 @@ const Book = () => {
 
   const selectClass = (selectedClass) => {
     setTravellers({
-      ...travellers, 
-      Class: selectedClass, 
+      ...travellers,
+      Class: selectedClass,
     });
     setShowClassDropdown(false);
   };
-  
-  const addFlight = () => {
-    setFlights([...flights, { from: "", to: "" }]);
+
+  const handleFlightChange = (index, field, value) => {
+    const updatedFlights = [...flights];
+    updatedFlights[index][field] = value;
+    setFlights(updatedFlights);
+
+    // Dynamically update source and destination arrays
+    if (field === "from") {
+      const updatedSource = [...source];
+      updatedSource[index] = value;
+      setSource(updatedSource);
+    }
+
+    if (field === "to") {
+      const updatedDestination = [...destination];
+      updatedDestination[index] = value;
+      setDestination(updatedDestination);
+    }
   };
 
-  // const updateTravelerCount = (type, operation) => {
-  //   setTravellers((prev) => ({
-  //     ...prev,
-  //     [type]:
-  //       operation === "increment"
-  //         ? prev[type] + 1
-  //         : Math.max(0, prev[type] - 1),
-  //   }));
-  // };
+  const addFlight = () => {
+    const lastTo = flights[flights.length - 1]?.to || "";
+    setFlights([...flights, { from: lastTo, to: "" }]);
+
+    // Update source and destination arrays
+    setSource([...source, lastTo]); // Add the last 'to' value to source for the new flight
+    setDestination([...destination, ""]); // Placeholder for the new 'to' field
+  };
 
   return (
     <div className="h-[100vh] bg-[#DDDDDD] flex flex-col items-center justify-between">
@@ -52,16 +76,11 @@ const Book = () => {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            <img
-              src={`/${tab}.svg`} // Example icons: /icons/flights.svg, /icons/trains.svg, /icons/buses.svg
-              alt={tab}
-              className="w-12 h-auto mb-2"
-            />
+            <img src={`/${tab}.svg`} alt={tab} className="w-12 h-auto mb-2" />
             <span className="capitalize font-bold">{tab}</span>
           </div>
         ))}
       </div>
-      {/* Search Form */}
       <div className="bg-white shadow-lg absolute top-[12rem] rounded-custom-40 px-8 pt-8 w-3/4 pl-20 pr-20 z-50 mb-20">
         {flights.map((flight, index) => (
           <div key={index} className="flex flex-col justify-between mb-4 z-50">
@@ -72,6 +91,10 @@ const Book = () => {
               <input
                 type="text"
                 placeholder="Enter origin city"
+                value={flight.from}
+                onChange={(e) =>
+                  handleFlightChange(index, "from", e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -82,12 +105,15 @@ const Book = () => {
               <input
                 type="text"
                 placeholder="Enter destination city"
+                value={flight.to}
+                onChange={(e) =>
+                  handleFlightChange(index, "to", e.target.value)
+                }
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
         ))}
-
         <div className="flex justify-center w-full mt-4 mb-4">
           <button
             className="flex items-center justify-center space-x-2 border border-gray-400 rounded-full py-2 px-4 text-gray-600 hover:bg-gray-100"
@@ -110,11 +136,7 @@ const Book = () => {
               onClick={() => setShowTravellerDropdown(!showTravellerDropdown)}
             >
               <span className="font-bold">
-                {travellers.adults > 0
-                  ? `${travellers.adults} Adult${
-                      travellers.adults > 1 ? "s" : ""
-                    }`
-                  : ""}
+                {travellers.adults} Adult{travellers.adults > 1 ? "s" : ""}
                 {travellers.children > 0
                   ? `, ${travellers.children} Child${
                       travellers.children > 1 ? "ren" : ""
@@ -250,9 +272,12 @@ const Book = () => {
           </div>
         </div>
         <div className="flex justify-center items-center">
-          <button className="w-1/4 bg-blue-600 text-white py-3 shadow-md hover:bg-blue-700 focus:outline-none rounded-3xl relative -bottom-6">
+          <Link
+            to="/flight"
+            className="w-1/4 bg-blue-600 text-white py-3 shadow-md hover:bg-blue-700 focus:outline-none rounded-3xl relative -bottom-6 flex justify-center items-center"
+          >
             Search Flights
-          </button>
+          </Link>
         </div>
         <div className="absolute top-[28rem] -left-[17rem] w-40 h-40 bg-blue-500 rounded-full z-10"></div>
       </div>

@@ -13,7 +13,15 @@ const DetailsProvider = ({ children }) => {
 
   return (
     <Details.Provider
-      value={{ source, setSource, destination, setDestination, travellers, setTravellers }}>
+      value={{
+        source,
+        setSource,
+        destination,
+        setDestination,
+        travellers,
+        setTravellers,
+      }}
+    >
       {children}
     </Details.Provider>
   );
