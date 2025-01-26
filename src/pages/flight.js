@@ -51,7 +51,7 @@ const Flight = () => {
               activeBtn === "1"
                 ? "bg-red-600 text-white"
                 : "bg-[#DDDDDD] text-black"
-            } px-4 flex-grow`}
+            } px-4 flex-grow transition-colors duration-500`}
           >
             Flight Combinations
           </button>
@@ -61,7 +61,7 @@ const Flight = () => {
               activeBtn === "2"
                 ? "bg-red-600 text-white"
                 : "bg-[#DDDDDD] text-black"
-            } px-4 flex-grow`}
+            } px-4 flex-grow transition-colors duration-500`}
           >
             Select Manually
           </button>
@@ -71,7 +71,7 @@ const Flight = () => {
               activeBtn === "3"
                 ? "bg-red-600 text-white"
                 : "bg-[#DDDDDD] text-black"
-            } px-4 flex-grow`}
+            } px-4 flex-grow transition-colors duration-500`}
           >
             Nearby Hotels
           </button>
