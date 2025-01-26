@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Book from './pages/book';
 import Home from './pages/home'; 
 import Flight from './pages/flight';
+import DetailsProvider from './pages/context';
 function App() {
   return (
+    <DetailsProvider>
     <BrowserRouter>
     <Routes>
       <Route path="/" element={<Home/>}/>
@@ -12,7 +14,7 @@ function App() {
       <Route path='/flight' element={<Flight/>}/>
     </Routes>
     </BrowserRouter>
-
+    </DetailsProvider>
   );
 }
 

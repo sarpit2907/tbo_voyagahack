@@ -1,13 +1,9 @@
 import React, { useState } from "react";
+import { useDetails } from "./context";
 
 const Book = () => {
-  const [travellers, setTravellers] = useState({
-    adults: 1,
-    children: 0,
-    infants: 0,
-  });
+  const {source, setSource, destination, setDestination, travellers, setTravellers}=useDetails();
   const [activeTab, setActiveTab] = useState("flights");
-  const [travelClass, setTravelClass] = useState("Economy");
   const [showTravellerDropdown, setShowTravellerDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [flights, setFlights] = useState([{ from: "", to: "" }]);
@@ -23,10 +19,13 @@ const Book = () => {
   };
 
   const selectClass = (selectedClass) => {
-    setTravelClass(selectedClass);
+    setTravellers({
+      ...travellers, 
+      Class: selectedClass, 
+    });
     setShowClassDropdown(false);
   };
-
+  
   const addFlight = () => {
     setFlights([...flights, { from: "", to: "" }]);
   };
@@ -219,7 +218,7 @@ const Book = () => {
               className="w-full flex items-center justify-between border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => setShowClassDropdown(!showClassDropdown)}
             >
-              <span className="font-bold">{travelClass}</span>
+              <span className="font-bold">{travellers.Class}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-blue-500"
