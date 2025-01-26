@@ -6,6 +6,7 @@ const Book = () => {
     children: 0,
     infants: 0,
   });
+  const [activeTab, setActiveTab] = useState("flights");
   const [travelClass, setTravelClass] = useState("Economy");
   const [showTravellerDropdown, setShowTravellerDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
@@ -41,23 +42,31 @@ const Book = () => {
   // };
 
   return (
-    <div className="min-h-screen bg-[#DDDDDD] flex flex-col items-center justify-between">
-      {/* Header */}
-      <header className="w-full bg-white text-white py-6 flex items-center justify-between px-6 z-50">
-        <img src="/logo.svg" alt="Logo" className="h-10 w-auto pl-10" />
-        <img src="/account.svg" alt="Account" className="h-10 w-auto pr-10" />
-      </header>
-
-      <div className="absolute w-full h-20 bg-blue-500 top-20"></div>
-      <div className="absolute w-0 h-0 border-l-[50vw] border-l-transparent border-r-[50vw] border-r-transparent border-t-[40vh] border-t-blue-500 z-0 top-40"></div>
-
-      <div className="absolute top-28 right-56 w-40 h-40 bg-orange-500 rounded-full z-10"></div>
-
+    <div className="h-[100vh] bg-[#DDDDDD] flex flex-col items-center justify-between">
+      <div className="absolute w-full h-20 top-10 z-50"></div>
+      <div className="flex justify-center items-center bg-[#267CE2] text-white py-6 w-full z-10">
+        {["flights", "trains", "buses"].map((tab) => (
+          <div
+            key={tab}
+            className={`flex flex-col items-center mx-20 cursor-pointer ${
+              activeTab === tab ? "border-b-4 border-orange-500" : ""
+            }`}
+            onClick={() => setActiveTab(tab)}
+          >
+            <img
+              src={`/${tab}.svg`} // Example icons: /icons/flights.svg, /icons/trains.svg, /icons/buses.svg
+              alt={tab}
+              className="w-12 h-auto mb-2"
+            />
+            <span className="capitalize font-bold">{tab}</span>
+          </div>
+        ))}
+      </div>
       {/* Search Form */}
-      <div className="mt-20 bg-white shadow-lg rounded-custom-40 px-8 pt-8 w-3/4 pl-20 pr-20 z-50 mb-20">
+      <div className="bg-white shadow-lg absolute top-[12rem] rounded-custom-40 px-8 pt-8 w-3/4 pl-20 pr-20 z-50 mb-20">
         {flights.map((flight, index) => (
-          <div key={index} className="flex flex-col justify-between mb-4">
-            <div className="relative w-full">
+          <div key={index} className="flex flex-col justify-between mb-4 z-50">
+            <div className="relative w-full z-50">
               <label className="absolute -top-2 left-3 bg-white px-1 text-sm text-black text-bold">
                 From
               </label>
@@ -246,16 +255,14 @@ const Book = () => {
             Search Flights
           </button>
         </div>
-        <div className="absolute bottom-16 -left-24 w-40 h-40 bg-blue-500 rounded-full z-10"></div>
+        <div className="absolute top-[28rem] -left-[17rem] w-40 h-40 bg-blue-500 rounded-full z-10"></div>
       </div>
-      {/* Footer */}
-      <div className="relative mt-20 w-full bottom-0">
-        <footer className="bottom-0 bg-gray-800 text-white py-6 w-full ">
-          <div className="container mx-auto px-6 text-center">
-            <p>&copy; 2025 TravelNow. All rights reserved.</p>
-          </div>
-        </footer>
-      </div>
+      <div className="absolute top-[128px] right-[13.7rem] bg-[#F16B24] w-[100px] h-[100px] rounded-full z-10"></div>
+      <img
+        className="absolute bottom-[26.8rem] left-0 w-full -z-0"
+        src="/hero.svg"
+        alt="Hero Curve"
+      />
     </div>
   );
 };
