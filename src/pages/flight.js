@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDetails } from "./context";
-
+import axios from "axios";
 const Flight = () => {
   const [activeTab, setActiveTab] = useState("flights");
   const { travellers, source, destination, date } = useDetails();
   const [activeBtn, setActiveBtn] = useState("1");
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  console.log(new Date(date[0]).toISOString().split("T")[0] + "T00:00:00");
+  
   const filterSections = [
     {
       title: "Popular Filters",
@@ -109,6 +113,62 @@ const Flight = () => {
   const toggleBtn = (btn) => {
     setActiveBtn(btn);
   };
+  
+  const fetchFlights = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("http://localhost:3001/api/searchFlights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+          body: JSON.stringify({
+            EndUserIp: "192.168.10.10",
+            TokenId: "22fbe3ce-177e-47f3-bcd4-7ff047ef1cf9",
+            AdultCount: travellers.adults,
+            ChildCount: travellers.children,
+            InfantCount: travellers.infants,
+            DirectFlight: "false",
+            OneStopFlight: "false",
+            JourneyType: "1",
+            PreferredAirlines: null,
+            Segments: [
+              {
+                Origin: source[0], // Example: BOM
+                Destination: destination[0], // Example: VNS
+                FlightCabinClass: "1",
+                PreferredDepartureTime: new Date(date[0]).toISOString().split("T")[0] + "T00:00:00", // Example:  `${date[0]}T00:00:00`
+                PreferredArrivalTime: null,
+              },
+            ],
+            Sources: null,
+          }),
+        }
+      );
+     
+      const data = await response.json();
+      // console.log(data);
+      
+      if (data.Response.Results && data.Response.Results.length > 0) {
+        setAvailableFlights(data.Response.Results[0]);
+      } else {
+        setAvailableFlights([]);
+        setError("No flights found for the selected criteria.");
+      }
+    } catch (err) {
+      setError("Error fetching flights. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // console.log(availableFlights[0].Segments?.[0]?.[0]?.Origin?.Airport?.AirportCode);
+  console.log(availableFlights);
+  
+  useEffect(() => {
+    fetchFlights(); // Fetch flights on component mount or when source/destination changes
+  }, [source, destination, date]);
+
 
   const bookTickets = async () => {
     const response = await fetch("http://localhost:3000/api/book", {
@@ -134,10 +194,9 @@ const Flight = () => {
     const data = await response.json();
     if (data) setAvailableFlights(data);
   };
-  console.log(flights);
   
   return (
-    <div className="min-h-screen min-w-screen bg-[#DDDDDD] flex flex-col relative">
+    <div className="min-h-screen min-w-screen bg-[#DDDDDD] flex flex-col relative pb-4">
       <div className="relative w-full">
         <div className="relative bg-[#267CE2] w-full h-32 mb-8">
           <div className="absolute left-3/4 top-16 bg-orange-500 w-32 h-16 rounded-t-full"></div>
@@ -221,59 +280,104 @@ const Flight = () => {
               </div>
 
               <div className="flex flex-col mt-4 w-full space-y-4 justify-center items-center">
-                <div className="w-3/4 bg-white flex items-center justify-between pr-10 font-bold rounded-md py-1">
-                  <p></p>
-                  <p>Destination</p>
-                  <p>Duration</p>
-                  <p>Arrival</p>
-                  <p>Price</p>
-                </div>
-                {availableFlights.map((flight, index) => (
-                  <div
-                    key={index}
-                    className="w-3/4 bg-white flex items-center justify-between font-bold rounded-md pr-10"
-                  >
-                    <div className="w-12 h-12 mr-4">
-                      <img
-                        src="https://www.airindia.in/img/AirIndia-Logo.svg"
-                        alt="Air India Logo"
-                        className="w-full h-full object-contain"
-                      ></img>
-                    </div>
-                    <div>
-                      <div className="flex items-center">
-                        <span className="font-bold text-lg mr-2">VNS</span>
-                        <span className="text-gray-600 text-sm">13:35</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Varanasi,India
-                      </div>
-                    </div>
-                    <div className="mx-4">
-                      <span className="font-medium">2h 35m</span>
-                      <span className="text-gray-600 text-xs">Nonstop</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-end">
-                        <span className="font-bold text-lg mr-2">BLR</span>
-                        <span className="text-gray-600 text-sm">16:10</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Bengaluru,India
-                      </div>
-                    </div>
-                    <div className="flex flex-col ml-6">
-                      <span className="text-xl font-bold">₹22,224</span>
-                      <button
-                        className="bg-red-600 text-white rounded-md h-8 px-2 py-1"
-                        onClick={bookTickets}
-                      >
-                        Book
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+  {loading ? (
+    <p className="text-xl">Loading flights...</p>
+  ) : error ? (
+    <p className="text-xl text-red-600">{error}</p>
+  ) : (
+    availableFlights.map((flight, index) => (
+      <div
+        key={index}
+        className="flex items-center justify-between bg-white shadow-md rounded-md p-4 w-3/4"
+      >
+        {/* Airline Logo and Name */}
+        <div className="flex flex-col items-center justify-center max-w-25 min-w-20">
+          <div className="w-10 h-10">
+            <img
+              src={`https://www.gstatic.com/flights/airline_logos/70px/${
+                flight.Segments[0][0].Airline.AirlineCode || "default"
+              }.png`}
+              alt={`${
+                flight.Segments[0][0].Airline.AirlineName || "Airline"
+              } Logo`}
+              className="w-full h-full object-contain"
+              onError={(e) => (e.target.src = "/path-to-default-logo.png")}
+            />
+          </div>
+          <div>
+            <p className="font-bold text-lg">{flight.Segments[0][0].Airline.AirlineName}</p>
+          </div>
+        </div>
+
+        {/* Departure Details */}
+        <div className="text-center">
+          <p className="font-bold text-xl">
+            {flight.Segments[0][0].Origin.Airport.AirportCode}{" "}
+            {new Date(flight.Segments[0][0].Origin.DepTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+          <p className="text-gray-600">{flight.Segments[0][0].Origin.Airport.CityName}, India</p>
+        </div>
+
+        {/* Duration and Stops */}
+        <div className="text-center">
+          <p className="font-bold text-xl">
+            {Math.floor(
+              flight.Segments[0].reduce((total, seg) => total + seg.Duration, 0) / 60
+            )}h{" "}
+            {flight.Segments[0].reduce((total, seg) => total + seg.Duration, 0) % 60}m
+          </p>
+          <p className="text-gray-600">
+            {flight.Segments[0].length === 1
+              ? "Non-stop"
+              : `${flight.Segments[0].length - 1} stop${
+                  flight.Segments[0].length > 2 ? "s" : ""
+                } (${flight.Segments[0]
+                  .slice(1)
+                  .map((seg) => seg.Origin.Airport.AirportCode)
+                  .join(", ")})`}
+          </p>
+          <button className="text-blue-500 underline">View flight details</button>
+        </div>
+
+        {/* Arrival Details */}
+        <div className="text-center">
+          <p className="font-bold text-xl">
+            {flight.Segments[0][flight.Segments[0].length - 1].Destination.Airport.AirportCode}{" "}
+            {new Date(
+              flight.Segments[0][flight.Segments[0].length - 1].Destination.ArrTime
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+          <p className="text-gray-600">
+            {
+              flight.Segments[0][flight.Segments[0].length - 1].Destination.Airport.CityName
+            }
+            , India
+          </p>
+        </div>
+
+        {/* Price and Add to Trip */}
+        <div className="text-center">
+          <p className="font-bold text-2xl text-black">
+            ₹{flight.Fare.PublishedFare.toLocaleString()}
+          </p>
+          <button
+            onClick={() => bookTickets(flight.ResultIndex)}
+            className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
+          >
+            ADD TO TRIP
+          </button>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
             </div>
           )}
           {activeBtn === "1" && (
