@@ -3,12 +3,105 @@ import { useDetails } from "./context";
 
 const Flight = () => {
   const [activeTab, setActiveTab] = useState("flights");
-  const { travellers, source, destination } = useDetails();
+  const { travellers, source, destination, date } = useDetails();
   const [activeBtn, setActiveBtn] = useState("1");
   const [availableFlights, setAvailableFlights] = useState([]);
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const filterSections = [
+    {
+      title: "Popular Filters",
+      items: [
+        { label: "Daily Steal Deal", value: "dailyStealDeal" },
+        { label: "Early Bird Deal", value: "earlyBirdDeal" },
+        { label: "Last Minute Deal", value: "lastMinuteDeal" },
+        { label: "Couple Friendly", value: "coupleFriendly" },
+        { label: "Free Cancellation", value: "freeCancellation" },
+        { label: "Free Breakfast", value: "freeBreakfast" },
+        { label: "Pay at Hotel", value: "payAtHotel" },
+      ],
+    },
+    {
+      title: "Price",
+      items: [
+        { label: "₹0 - ₹1500", value: "0-1500" },
+        { label: "₹1500 - ₹3500", value: "1500-3500" },
+        { label: "₹3500 - ₹7500", value: "3500-7500" },
+        { label: "₹7500 - ₹11500", value: "7500-11500" },
+        { label: "₹11500 - ₹15000", value: "11500-15000" },
+        { label: "₹15000+", value: "15000plus" },
+      ],
+    },
+    {
+      title: "Star Rating",
+      items: [
+        { label: "3 Star", value: "3star" },
+        { label: "4 Star", value: "4star" },
+        { label: "5 Star", value: "5star" },
+      ],
+    },
+    {
+      title: "User Rating",
+      items: [
+        { label: "3+", value: "rating3" },
+        { label: "3.5+", value: "rating3_5" },
+        { label: "4+", value: "rating4" },
+        { label: "4.5+", value: "rating4_5" },
+      ],
+    },
+    {
+      title: "Room Views",
+      items: [
+        { label: "Garden View", value: "gardenView" },
+        { label: "City View", value: "cityView" },
+      ],
+    },
+    {
+      title: "House Rules",
+      items: [
+        { label: "Smoking Allowed", value: "smokingAllowed" },
+        { label: "Unmarried Couples Allowed", value: "unmarriedCouples" },
+        { label: "Alcohol Allowed", value: "alcoholAllowed" },
+        { label: "Pets Allowed", value: "petsAllowed" },
+      ],
+    },
+    {
+      title: "Food & Dining",
+      items: [
+        { label: "Breakfast Included", value: "breakfastIncluded" },
+        { label: "Dinner Included", value: "dinnerIncluded" },
+        { label: "All meals available", value: "allMealsAvailable" },
+      ],
+    },
+  ];
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const expanded = {};
+    filterSections.forEach((sec) => {
+      expanded[sec.title] = true;
+    });
+    return expanded;
+  });
+
+  const toggleSection = (title) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  const toggleFilter = (value) => {
+    setSelectedFilters((prev) => ({
+      ...prev,
+      [value]: !prev[value],
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilters({});
+  };
+
   const flights = [];
   for (let i = 0; i < source.length; i++) {
-    flights.push({ from: source[i], to: destination[i] });
+    flights.push({ from: source[i], to: destination[i], date:date[i] });
   }
   const [activeDstn, setActiveDstn] = useState(flights[0]?.to || "");
   const [activeSort, setActiveSort] = useState("Most Popular");
@@ -41,7 +134,8 @@ const Flight = () => {
     const data = await response.json();
     if (data) setAvailableFlights(data);
   };
-
+  console.log(flights);
+  
   return (
     <div className="min-h-screen min-w-screen bg-[#DDDDDD] flex flex-col relative">
       <div className="relative w-full">
@@ -121,7 +215,7 @@ const Flight = () => {
                     <p className="text-3xl">
                       {flight.from}-{flight.to}
                     </p>
-                    <span className="text-s">Tuesday,8/11/2002</span>
+                    <span className="text-s"> {flight.date ? flight.date.toLocaleDateString() : ""}</span>
                   </button>
                 ))}
               </div>
@@ -209,7 +303,7 @@ const Flight = () => {
                     <p className="text-3xl">
                       {flight.from}-{flight.to}
                     </p>
-                    <span className="text-s">Tuesday,8/11/2002</span>
+                    <span className="text-s">{flight.date ? flight.date.toLocaleDateString() : ""}</span>
                   </button>
                 ))}
               </div>
@@ -305,12 +399,50 @@ const Flight = () => {
                 </button>
               </div>
 
-              <div className="flex w-3/4 h-auto mt-5 space-x-5">
-                <div className="w-1/5 bg-white h-80 font-bold pl-3 rounded-lg">
-                  FILTERS
-                  <button className="bg-red-600 text-white rounded-md px-2 py-1 mt-2 ml-4">
-                    CLEAR
-                  </button>
+              <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
+                <div className="w-1/5 bg-white rounded-lg pl-3 font-semibold text-gray-700">
+                  <div className="flex justify-between items-center p-3 border-b border-gray-200">
+                    <span className="text-lg">FILTERS</span>
+                    <button
+                      className="bg-red-600 text-white text-sm rounded-md px-2 py-1"
+                      onClick={clearAllFilters}
+                    >
+                      CLEAR
+                    </button>
+                  </div>
+                  <div className="p-2 space-y-3 text-sm font-normal">
+                    {filterSections.map((section) => (
+                      <div key={section.title}>
+                        <div
+                          onClick={() => toggleSection(section.title)}
+                          className="flex justify-between items-center cursor-pointer font-semibold"
+                        >
+                          <span>{section.title}</span>
+                          <span className="text-xl">
+                            {expandedSections[section.title] ? "▼" : "▶"}
+                          </span>
+                        </div>
+
+                        {expandedSections[section.title] && (
+                          <div className="mt-2 ml-2 space-y-1">
+                            {section.items.map((item) => (
+                              <label
+                                key={item.value}
+                                className="flex items-center space-x-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFilters[item.value] || false}
+                                  onChange={() => toggleFilter(item.value)}
+                                />
+                                <span>{item.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-col space-y-4 w-4/5 pb-8">
                   {/* Hotel Card #1 */}
@@ -627,5 +759,4 @@ const Flight = () => {
     </div>
   );
 };
-
 export default Flight;

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 const Details = createContext();
 const DetailsProvider = ({ children }) => {
   const [source, setSource] = useState([]);
+  const [date, setDate] = useState([]);
   const [destination, setDestination] = useState([]);
   const [travellers, setTravellers] = useState({
     adults: 1,
@@ -20,6 +21,8 @@ const DetailsProvider = ({ children }) => {
         setDestination,
         travellers,
         setTravellers,
+        date,
+        setDate
       }}
     >
       {children}

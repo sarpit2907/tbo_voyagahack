@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 const Home = () => {
   return (
-    <div className="bg-[#DDDDDD] w-[100vw]">
+    <div className="bg-[#DDDDDD] w-full overflow-x-hidden relative">
       {/* Hero Section */}
       <section className="relative text-white py-20">
         <div className="relative">
