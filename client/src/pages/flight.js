@@ -3,7 +3,7 @@ import { useDetails } from "./context.js";
 import axios from "axios";
 const Flight = () => {
   const [activeTab, setActiveTab] = useState("flights");
-  const { travellers, source, destination, date } = useDetails();
+  const { travellers, source, destination, date, cost, setCost } = useDetails();
   const [activeBtn, setActiveBtn] = useState("1");
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({});
@@ -32,10 +32,15 @@ const Flight = () => {
     IDR: "Indore",
     NAG: "Nagpur",
   };
-  
-  
+
   // console.log(new Date(date[0]).toISOString().split("T")[0] + "T00:00:00");
   console.log(`${date[0]}T00:00:00`);
+
+  const increaseCost = (amount) => {
+    let initialCost = cost;
+    initialCost+=amount;
+    setCost(Math.ceil(initialCost));
+  }
 
   const filterSections = [
     {
@@ -128,7 +133,7 @@ const Flight = () => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 EndUserIp: "192.168.10.10",
-                TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+                TokenId: "3897f208-3bc1-4f5d-8cba-72d075214e7d",
                 AdultCount: travellers.adults,
                 ChildCount: travellers.children,
                 InfantCount: travellers.infants,
@@ -270,7 +275,7 @@ const Flight = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+          TokenId: "3897f208-3bc1-4f5d-8cba-72d075214e7d",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -324,7 +329,7 @@ const Flight = () => {
         },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+          TokenId: "3897f208-3bc1-4f5d-8cba-72d075214e7d",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -363,25 +368,26 @@ const Flight = () => {
   const fetchCityId = async (cityName) => {
     try {
       const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/citySearch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          EndUserIp: "192.168.10.26",
-          TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
-          CountryCode: "IN", // Assuming all cities are in India
-          SearchType: "1", // Assuming this is for searching cities
-        }),
-      });
-  
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            EndUserIp: "192.168.10.26",
+            TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+            CountryCode: "IN", // Assuming all cities are in India
+            SearchType: "1", // Assuming this is for searching cities
+          }),
+        }
+      );
+
       const data = await response.json();
-      
+
       if (data && data.Destinations && Array.isArray(data.Destinations)) {
         const foundCity = data.Destinations.find(
           (c) => c.CityName.toLowerCase() === cityName.toLowerCase()
         );
-  
+
         return foundCity ? foundCity.DestinationId : null;
       } else {
         console.error("City search response invalid:", data);
@@ -392,24 +398,24 @@ const Flight = () => {
       return null;
     }
   };
-  
+
   const fetchSights = async (airportCode, index = 0) => {
     setLoading(true);
     setError(null);
     console.log("Fetching CityId for:", airportCode);
-  
+
     try {
       const cityName = airportToCityMap[airportCode.toUpperCase()];
       const cityId = await fetchCityId(cityName);
-  
+
       if (!cityId) {
         setError(`CityId not found for ${cityName}`);
         setLoading(false);
         return;
       }
-  
+
       console.log(`Fetched CityId: ${cityId} for ${cityName}`);
-  
+
       const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchSights", {
         method: "POST",
         headers: {
@@ -427,16 +433,16 @@ const Flight = () => {
           PreferredCurrency: "INR",
           IsBaseCurrencyRequired: false,
           EndUserIp: "192.168.5.56",
-          TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+          TokenId: "3897f208-3bc1-4f5d-8cba-72d075214e7d",
           KeyWord: "",
         }),
       });
-  
+
       const data = await response.json();
       console.log("Sightseeing API Response:", data);
-  
+
       if (data.Response?.SightseeingSearchResults?.length > 0) {
-        setSightseeingOptions([...data.Response.SightseeingSearchResults]); 
+        setSightseeingOptions([...data.Response.SightseeingSearchResults]);
       } else {
         setSightseeingOptions([]);
         setError("No sightseeing options found for the selected criteria.");
@@ -448,7 +454,7 @@ const Flight = () => {
       setLoading(false);
     }
   };
-  
+
   // console.log(availableFlights[0].Segments?.[0]?.[0]?.Origin?.Airport?.AirportCode);
   console.log(sightseeingOptions);
 
@@ -551,15 +557,13 @@ const Flight = () => {
         <div className="w-full mt-6">
           {activeBtn === "1" && (
             <div className="w-full flex flex-col items-center">
-            <p>Select Your Itinerary</p>
-            <p className="text-2xl">Showing Results For</p>
-            <div className="flex space-x-5 my-5">
+              <p>Select Your Itinerary</p>
+              <p className="text-2xl">Showing Results For</p>
+              <div className="flex space-x-5 my-5">
                 {flights.map((flight, index) => (
                   <button
                     key={index}
-                    className={`${
-                      "bg-blue-700 text-white"
-                    } rounded-md px-4 py-2 transition-colors duration-200`}
+                    className={`${"bg-blue-700 text-white"} rounded-md px-4 py-2 transition-colors duration-200`}
                   >
                     <p className="text-3xl">
                       {flight.from}-{flight.to}
@@ -568,150 +572,157 @@ const Flight = () => {
                   </button>
                 ))}
               </div>
-            <div className="flex flex-col mt-4 w-full space-y-4 justify-center items-center">
-              {/* Table Header */}
-              <div className="flex items-center justify-center bg-white text-black font-bold text-lg p-4 w-3/4 rounded-t-md">
-              <div className=" pl-[280px] w-1/4 text-center">Departure</div>
+              <div className="flex flex-col mt-4 w-full space-y-4 justify-center items-center">
+                {/* Table Header */}
+                <div className="flex items-center justify-center bg-white text-black font-bold text-lg p-4 w-3/4 rounded-t-md">
+                  <div className=" pl-[280px] w-1/4 text-center">Departure</div>
                   <div className="pl-56 w-1/4 text-center">Duration</div>
                   <div className="pl-36 w-1/4 text-center">Arrival</div>
                   <div className="pl-12 w-1/4 text-center text-blue-600">
                     Price
                   </div>
-              </div>
+                </div>
 
-              {/* Loading & Error Handling */}
-              {loading ? (
-                <p className="text-xl">Loading flights...</p>
-              ) : error ? (
-                <p className="text-xl text-red-600">{error}</p>
-              ) : (
-                combinedResults.map((combo, comboIndex) => {
-                  const { flights, totalFare } = combo;
+                {/* Loading & Error Handling */}
+                {loading ? (
+                  <p className="text-xl">Loading flights...</p>
+                ) : error ? (
+                  <p className="text-xl text-red-600">{error}</p>
+                ) : (
+                  combinedResults.map((combo, comboIndex) => {
+                    const { flights, totalFare } = combo;
 
-                  return (
-                    <div
-                      key={comboIndex}
-                      className="flex flex-col bg-white shadow-md rounded-md p-4 w-3/4 mb-4"
-                    >
-                      {/* Loop through each leg of this multi-journey flight */}
-                      {flights.map((flight, flightIdx) => {
-                        const leg = flight.Segments[0];
-                        const airline = leg[0].Airline;
-                        const departureSegment = leg[0];
-                        const arrivalSegment = leg[leg.length - 1];
+                    return (
+                      <div
+                        key={comboIndex}
+                        className="flex flex-col bg-white shadow-md rounded-md p-4 w-3/4 mb-4"
+                      >
+                        {/* Loop through each leg of this multi-journey flight */}
+                        {flights.map((flight, flightIdx) => {
+                          const leg = flight.Segments[0];
+                          const airline = leg[0].Airline;
+                          const departureSegment = leg[0];
+                          const arrivalSegment = leg[leg.length - 1];
 
-                        // Calculate duration
-                        const totalMinutes = leg.reduce(
-                          (sum, seg) => sum + seg.Duration,
-                          0
-                        );
-                        const hours = Math.floor(totalMinutes / 60);
-                        const minutes = totalMinutes % 60;
-                        const stopsCount = leg.length - 1;
+                          // Calculate duration
+                          const totalMinutes = leg.reduce(
+                            (sum, seg) => sum + seg.Duration,
+                            0
+                          );
+                          const hours = Math.floor(totalMinutes / 60);
+                          const minutes = totalMinutes % 60;
+                          const stopsCount = leg.length - 1;
 
-                        // Helper function to format time
-                        const formatTime = (dateString) =>
-                          new Date(dateString).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          });
+                          // Helper function to format time
+                          const formatTime = (dateString) =>
+                            new Date(dateString).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            });
 
-                        return (
-                          <div
-                            key={flightIdx}
-                            className={`flex items-center justify-between py-4 ${
-                              flightIdx < flights.length - 1 ? "border-b" : ""
-                            }`}
-                          >
-                            {/* Airline Logo + Name */}
-                            <div className="flex flex-col items-center justify-center w-1/4">
-                              <div className="w-10 h-10">
-                                <img
-                                  src={`https://www.gstatic.com/flights/airline_logos/70px/${
-                                    airline.AirlineCode || "default"
-                                  }.png`}
-                                  alt={airline.AirlineName || "Airline Logo"}
-                                  className="w-full h-full object-contain"
-                                  onError={(e) =>
-                                    (e.target.src = "/path-to-default-logo.png")
-                                  }
-                                />
+                          return (
+                            <div
+                              key={flightIdx}
+                              className={`flex items-center justify-between py-4 ${
+                                flightIdx < flights.length - 1 ? "border-b" : ""
+                              }`}
+                            >
+                              {/* Airline Logo + Name */}
+                              <div className="flex flex-col items-center justify-center w-1/4">
+                                <div className="w-10 h-10">
+                                  <img
+                                    src={`https://www.gstatic.com/flights/airline_logos/70px/${
+                                      airline.AirlineCode || "default"
+                                    }.png`}
+                                    alt={airline.AirlineName || "Airline Logo"}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) =>
+                                      (e.target.src =
+                                        "/path-to-default-logo.png")
+                                    }
+                                  />
+                                </div>
+                                <p className="font-bold text-lg">
+                                  {airline.AirlineName}
+                                </p>
                               </div>
-                              <p className="font-bold text-lg">
-                                {airline.AirlineName}
-                              </p>
-                            </div>
 
-                            {/* Departure */}
-                            <div className="w-1/4 text-center">
-                              <p className="font-bold text-xl">
-                                {departureSegment.Origin.Airport.AirportCode}{" "}
-                                {formatTime(departureSegment.Origin.DepTime)}
-                              </p>
-                              <p className="text-gray-600">
-                                {departureSegment.Origin.Airport.CityName},
-                                India
-                              </p>
-                            </div>
+                              {/* Departure */}
+                              <div className="w-1/4 text-center">
+                                <p className="font-bold text-xl">
+                                  {departureSegment.Origin.Airport.AirportCode}{" "}
+                                  {formatTime(departureSegment.Origin.DepTime)}
+                                </p>
+                                <p className="text-gray-600">
+                                  {departureSegment.Origin.Airport.CityName},
+                                  India
+                                </p>
+                              </div>
 
-                            {/* Duration & Stops */}
-                            <div className="w-1/4 text-center">
-                              <p className="font-bold text-xl">
-                                {hours}h {minutes}m
-                              </p>
-                              <p className="text-gray-600">
-                                {stopsCount === 0
-                                  ? "Non-stop"
-                                  : `${stopsCount} stop${
-                                      stopsCount > 1 ? "s" : ""
-                                    } 
+                              {/* Duration & Stops */}
+                              <div className="w-1/4 text-center">
+                                <p className="font-bold text-xl">
+                                  {hours}h {minutes}m
+                                </p>
+                                <p className="text-gray-600">
+                                  {stopsCount === 0
+                                    ? "Non-stop"
+                                    : `${stopsCount} stop${
+                                        stopsCount > 1 ? "s" : ""
+                                      } 
                            (${leg
                              .slice(1)
                              .map((seg) => seg.Origin.Airport.AirportCode)
                              .join(", ")})`}
-                              </p>
-                              <button className="text-blue-500 underline">
-                                View details
-                              </button>
-                            </div>
+                                </p>
+                                <button className="text-blue-500 underline">
+                                  View details
+                                </button>
+                              </div>
 
-                            {/* Arrival */}
-                            <div className="w-1/4 text-center">
-                              <p className="font-bold text-xl">
-                                {arrivalSegment.Destination.Airport.AirportCode}{" "}
-                                {formatTime(arrivalSegment.Destination.ArrTime)}
-                              </p>
-                              <p className="text-gray-600">
-                                {arrivalSegment.Destination.Airport.CityName},
-                                India
-                              </p>
-                            </div>
+                              {/* Arrival */}
+                              <div className="w-1/4 text-center">
+                                <p className="font-bold text-xl">
+                                  {
+                                    arrivalSegment.Destination.Airport
+                                      .AirportCode
+                                  }{" "}
+                                  {formatTime(
+                                    arrivalSegment.Destination.ArrTime
+                                  )}
+                                </p>
+                                <p className="text-gray-600">
+                                  {arrivalSegment.Destination.Airport.CityName},
+                                  India
+                                </p>
+                              </div>
 
-                            {/* Price and "Add to Trip" Button */}
-                            <div className="text-center w-1/4">
-                              <p className="font-bold text-2xl text-black">
-                                ₹{totalFare.toLocaleString()}
-                              </p>
-                              <button
-                                onClick={() => {
-                                  console.log(
-                                    "Booking these 4 flights together:",
-                                    flights
-                                  );
-                                }}
-                                className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
-                              >
-                                ADD TO TRIP
-                              </button>
+                              {/* Price and "Add to Trip" Button */}
+                              <div className="text-center w-1/4">
+                                <p className="font-bold text-2xl text-black">
+                                  ₹{totalFare.toLocaleString()}
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    increaseCost(totalFare);
+                                    console.log(
+                                      "Booking these 4 flights together:",
+                                      flights
+                                    );
+                                  }}
+                                  className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
+                                >
+                                  ADD TO TRIP
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
 
@@ -864,7 +875,10 @@ const Flight = () => {
                           ₹{flight.Fare.PublishedFare.toLocaleString()}
                         </p>
                         <button
-                          onClick={() => bookTickets(flight.ResultIndex)}
+                          onClick={() => {
+                            increaseCost(flight.Fare.PublishedFare);
+                            bookTickets(flight.ResultIndex)
+                          }}
                           className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
                         >
                           ADD TO TRIP
@@ -1342,191 +1356,199 @@ const Flight = () => {
             </div>
           )}
           {activeBtn === "4" && (
-  <div className="w-full flex flex-col items-center">
-    {/* Header */}
-    <p>Select Your Itinerary</p>
-    <p className="text-2xl">Showing Results For</p>
+            <div className="w-full flex flex-col items-center">
+              {/* Header */}
+              <p>Select Your Itinerary</p>
+              <p className="text-2xl">Showing Results For</p>
 
-    <div className="flex space-x-5 my-5">
-      {flights.map((flight, index) => (
-        <button
-          key={index}
-          className={`${
-            activeDstn === flight.to
-              ? "bg-blue-700 text-white"
-              : "bg-white text-black"
-          } rounded-md px-4 py-2 transition-colors duration-200`}
-          onClick={() => {
-            togglesightdestin(index);
-            fetchFlightsByDestination(flight.to);
-          }}
-        >
-          <p className="text-3xl">{flight.from}-{flight.to}</p>
-          <span className="text-sm">{flight.date}</span>
-        </button>
-      ))}
-    </div>
-
-    {/* Sorting Options */}
-    <div className="flex w-full bg-white mt-5 h-10 items-center justify-center space-x-4">
-      <div className="text-lg font-bold">Sort By :</div>
-      <button
-        className={`${
-          activeSort === "Most Popular"
-            ? "bg-red-600 text-white"
-            : "bg-white text-black"
-        } rounded-md px-4 py-2 transition-colors duration-200`}
-        onClick={() => setActiveSort("Most Popular")}
-      >
-        Most Popular
-      </button>
-      <button
-        className={`${
-          activeSort === "Price: Low to High"
-            ? "bg-red-600 text-white"
-            : "bg-white text-black"
-        } rounded-md px-4 py-2 transition-colors duration-200`}
-        onClick={() => setActiveSort("Price: Low to High")}
-      >
-        Price: Low to High
-      </button>
-      <button
-        className={`${
-          activeSort === "Price: High to Low"
-            ? "bg-red-600 text-white"
-            : "bg-white text-black"
-        } rounded-md px-4 py-2 transition-colors duration-200`}
-        onClick={() => setActiveSort("Price: High to Low")}
-      >
-        Price: High to Low
-      </button>
-      <button
-        className={`${
-          activeSort === "Reviews: Highest First"
-            ? "bg-red-600 text-white"
-            : "bg-white text-black"
-        } rounded-md px-4 py-2 transition-colors duration-200`}
-        onClick={() => setActiveSort("Reviews: Highest First")}
-      >
-        Reviews: Highest First
-      </button>
-    </div>
-
-    {/* Main Layout */}
-    <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
-      
-      {/* Sidebar Filters */}
-      <div className="w-1/5 h-[138vh] bg-white rounded-lg pl-3 pr-4 font-semibold text-gray-700">
-        <div className="flex justify-between items-center p-3 border-b border-gray-200">
-          <span className="text-lg">FILTERS</span>
-          <button
-            className="bg-red-600 text-white text-sm rounded-md px-2 py-1"
-            onClick={clearAllFilters}
-          >
-            CLEAR
-          </button>
-        </div>
-        <div className="p-2 space-y-3 text-sm font-normal">
-          {filterSections.map((section) => (
-            <div key={section.title}>
-              <div
-                onClick={() => toggleSection(section.title)}
-                className="flex justify-between items-center cursor-pointer font-semibold"
-              >
-                <span>{section.title}</span>
-                <span className="text-xl">
-                  {expandedSections[section.title] ? "▼" : "▶️"}
-                </span>
+              <div className="flex space-x-5 my-5">
+                {flights.map((flight, index) => (
+                  <button
+                    key={index}
+                    className={`${
+                      activeDstn === flight.to
+                        ? "bg-blue-700 text-white"
+                        : "bg-white text-black"
+                    } rounded-md px-4 py-2 transition-colors duration-200`}
+                    onClick={() => {
+                      togglesightdestin(index);
+                      fetchFlightsByDestination(flight.to);
+                    }}
+                  >
+                    <p className="text-3xl">
+                      {flight.from}-{flight.to}
+                    </p>
+                    <span className="text-sm">{flight.date}</span>
+                  </button>
+                ))}
               </div>
 
-              {expandedSections[section.title] && (
-                <div className="mt-2 ml-2 space-y-1">
-                  {section.items.map((item) => (
-                    <label
-                      key={item.value}
-                      className="flex items-center space-x-2"
+              {/* Sorting Options */}
+              <div className="flex w-full bg-white mt-5 h-10 items-center justify-center space-x-4">
+                <div className="text-lg font-bold">Sort By :</div>
+                <button
+                  className={`${
+                    activeSort === "Most Popular"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-black"
+                  } rounded-md px-4 py-2 transition-colors duration-200`}
+                  onClick={() => setActiveSort("Most Popular")}
+                >
+                  Most Popular
+                </button>
+                <button
+                  className={`${
+                    activeSort === "Price: Low to High"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-black"
+                  } rounded-md px-4 py-2 transition-colors duration-200`}
+                  onClick={() => setActiveSort("Price: Low to High")}
+                >
+                  Price: Low to High
+                </button>
+                <button
+                  className={`${
+                    activeSort === "Price: High to Low"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-black"
+                  } rounded-md px-4 py-2 transition-colors duration-200`}
+                  onClick={() => setActiveSort("Price: High to Low")}
+                >
+                  Price: High to Low
+                </button>
+                <button
+                  className={`${
+                    activeSort === "Reviews: Highest First"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-black"
+                  } rounded-md px-4 py-2 transition-colors duration-200`}
+                  onClick={() => setActiveSort("Reviews: Highest First")}
+                >
+                  Reviews: Highest First
+                </button>
+              </div>
+
+              {/* Main Layout */}
+              <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
+                {/* Sidebar Filters */}
+                <div className="w-1/5 h-[138vh] bg-white rounded-lg pl-3 pr-4 font-semibold text-gray-700">
+                  <div className="flex justify-between items-center p-3 border-b border-gray-200">
+                    <span className="text-lg">FILTERS</span>
+                    <button
+                      className="bg-red-600 text-white text-sm rounded-md px-2 py-1"
+                      onClick={clearAllFilters}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedFilters[item.value] || false}
-                        onChange={() => toggleFilter(item.value)}
-                      />
-                      <span>{item.label}</span>
-                    </label>
-                  ))}
+                      CLEAR
+                    </button>
+                  </div>
+                  <div className="p-2 space-y-3 text-sm font-normal">
+                    {filterSections.map((section) => (
+                      <div key={section.title}>
+                        <div
+                          onClick={() => toggleSection(section.title)}
+                          className="flex justify-between items-center cursor-pointer font-semibold"
+                        >
+                          <span>{section.title}</span>
+                          <span className="text-xl">
+                            {expandedSections[section.title] ? "▼" : "▶️"}
+                          </span>
+                        </div>
+
+                        {expandedSections[section.title] && (
+                          <div className="mt-2 ml-2 space-y-1">
+                            {section.items.map((item) => (
+                              <label
+                                key={item.value}
+                                className="flex items-center space-x-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFilters[item.value] || false}
+                                  onChange={() => toggleFilter(item.value)}
+                                />
+                                <span>{item.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
+
+                {/* Sightseeing Cards */}
+                <div className="flex flex-wrap justify-center gap-6 w-4/5 pb-8">
+                  {Array.isArray(sightseeingOptions) ? (
+                    sightseeingOptions.map((place, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 w-[380px] p-4"
+                      >
+                        {/* Title */}
+                        <h2 className="text-xl font-bold text-gray-900">
+                          {place.SightseeingName}
+                        </h2>
+
+                        {/* Image Section */}
+                        <div className="relative w-full h-48 rounded-md overflow-hidden mt-2">
+                          <img
+                            src={place.ImageList?.[0] || "/default-image.jpg"}
+                            alt={place.SightseeingName}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Price Tag */}
+                          <span className="absolute top-2 right-2 bg-white text-black font-bold px-3 py-1 rounded-md shadow-md">
+                            ₹{place.Price?.OfferedPriceRoundedOff} onwards
+                          </span>
+                        </div>
+
+                        {/* View Photos Link */}
+                        <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
+                          View All Photos
+                        </div>
+
+                        {/* Location and Distance */}
+                        <div className="flex justify-between items-center text-sm mt-2">
+                          <p>
+                            Located in:{" "}
+                            <span className="text-blue-600 font-medium">
+                              {place.CityName}
+                            </span>
+                          </p>
+                          <p className="text-gray-500">8km from city center</p>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-gray-700 text-sm mt-2 line-clamp-3">
+                          {place.TourDescription
+                            ? place.TourDescription.replace(
+                                /<\/?[^>]+(>|$)/g,
+                                ""
+                              ).substring(0, 180) + "..."
+                            : "No description available."}
+                        </p>
+
+                        {/* Buttons Section */}
+                        <div className="flex justify-between mt-4">
+                          <button className="border border-blue-600 text-blue-600 text-sm font-medium px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition">
+                            Know More
+                          </button>
+                          <button className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition"
+                          onClick={() => increaseCost(place.Price?.OfferedPriceRoundedOff)}>
+                            ADD TO TRIP
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xl text-gray-600 text-center">
+                      No sightseeing options available.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Sightseeing Cards */}
-      <div className="flex flex-wrap justify-center gap-6 w-4/5 pb-8">
-  {Array.isArray(sightseeingOptions) ? (
-    sightseeingOptions.map((place, index) => (
-      <div
-        key={index}
-        className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 w-[380px] p-4"
-      >
-        {/* Title */}
-        <h2 className="text-xl font-bold text-gray-900">{place.SightseeingName}</h2>
-
-        {/* Image Section */}
-        <div className="relative w-full h-48 rounded-md overflow-hidden mt-2">
-          <img
-            src={place.ImageList?.[0] || "/default-image.jpg"}
-            alt={place.SightseeingName}
-            className="w-full h-full object-cover"
-          />
-          {/* Price Tag */}
-          <span className="absolute top-2 right-2 bg-white text-black font-bold px-3 py-1 rounded-md shadow-md">
-            ₹{place.Price?.OfferedPriceRoundedOff} onwards
-          </span>
-        </div>
-
-        {/* View Photos Link */}
-        <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
-          View All Photos
-        </div>
-
-        {/* Location and Distance */}
-        <div className="flex justify-between items-center text-sm mt-2">
-          <p>
-            Located in:{" "}
-            <span className="text-blue-600 font-medium">{place.CityName}</span>
-          </p>
-          <p className="text-gray-500">8km from city center</p>
-        </div>
-
-        {/* Description */}
-        <p className="text-gray-700 text-sm mt-2 line-clamp-3">
-          {place.TourDescription
-            ? place.TourDescription.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 180) + "..."
-            : "No description available."}
-        </p>
-
-        {/* Buttons Section */}
-        <div className="flex justify-between mt-4">
-          <button className="border border-blue-600 text-blue-600 text-sm font-medium px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition">
-            Know More
-          </button>
-          <button className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition">
-            ADD TO TRIP
-          </button>
-        </div>
-      </div>
-    ))
-  ) : (
-    <p className="text-xl text-gray-600 text-center">No sightseeing options available.</p>
-  )}
-</div>
-
-
-    </div>
-  </div>
-)}
-
+          )}
         </div>
       </div>
 
@@ -1536,6 +1558,19 @@ const Flight = () => {
         src="/hero.svg"
         alt="Hero Curve"
       /> */}
+      <div className="sticky flex justify-between items-center bottom-2 w-auto mx-auto bg-[#267CE2] h-20 rounded-lg text-white ">
+          <div className="font-bold text-xl mx-auto px-5">
+            {`${source[0]}`}
+            {destination.map((dest, index) => (
+              ` - ${dest}`
+            ))}
+            {` Trip | ${date[0]}`}
+          </div>
+          <button className="bg-orange-500 px-5 py-2 w-auto mr-4 text-white rounded-lg">
+            <span className="text-3xl">₹{cost}</span>
+            <span className="text-xs">Total</span>
+          </button>
+      </div>
     </div>
   );
 };

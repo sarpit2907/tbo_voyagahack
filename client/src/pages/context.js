@@ -11,6 +11,7 @@ const DetailsProvider = ({ children }) => {
     infants: 0,
     Class: "Economy",
   });
+  const [cost, setCost] = useState(0);
 
   return (
     <Details.Provider
@@ -22,7 +23,10 @@ const DetailsProvider = ({ children }) => {
         travellers,
         setTravellers,
         date,
-        setDate
+        setDate,
+        cost,
+        setCost
+
       }}
     >
       {children}
