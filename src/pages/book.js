@@ -1,8 +1,8 @@
 import React, { useState, forwardRef } from "react";
-import { useDetails } from "./context";
+import { useDetails } from "./context.js";
 import { Link } from "react-router-dom";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+
+
 import { FaCalendarAlt } from "react-icons/fa";
 
 const Book = () => {
@@ -40,13 +40,11 @@ const Book = () => {
   const [selectedDate, setSelectedDate] = useState(null);
 
   // Format a Date into "YYYY-MM-DD"
-  const formatDate = (date) => {
-    if (!date) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  // function formatDate(inputDate) {
+  //   const date = new Date(inputDate);
+  //   return date.toISOString().split("T")[0] + "T00: 00: 00";
+  // }
+  
 
   const getFilteredSuggestions = (typed) => {
     if (!typed) return [];
@@ -167,12 +165,13 @@ const Book = () => {
           // cityVal = the typed city in "from"
           const city = flight.from || "";
           // dateVal = the selected date object
-          const dateVal = flight.date || null;
+          // const dateVal = flight.date || null;
 
           // Show city + date in the single input
-          const combinedVal = dateVal
-            ? `${city}, ${formatDate(dateVal)}`
-            : city;
+          // const combinedVal = dateVal
+          //   ? `${city}, ${dateVal}`
+          //   : city;
+          const combinedVal = city;
 
           return (
             <div key={index} className="flex flex-col mb-4">
@@ -193,13 +192,12 @@ const Book = () => {
 
                 {/* Calendar Icon (for date) on the right */}
                 <div className="absolute right-3 top-3 cursor-pointer">
-                  <DatePicker
-                    selected={date}
-                    onChange={(newDate) =>
-                      handleFlightChange(index, "date", newDate)
+                  <input
+                    type="date"
+                    value={flight.date} // Ensure flight.date is in "YYYY-MM-DD" format
+                    onChange={(e) =>
+                      handleFlightChange(index, "date", e.target.value)
                     }
-                    placeholderText="Select date"
-                    customInput={<CustomCalendarIcon />}
                   />
                 </div>
 
