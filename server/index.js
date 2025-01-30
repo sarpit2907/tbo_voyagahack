@@ -12,7 +12,9 @@ const app = express();
 app.use(cors());
 // 2. Parse JSON bodies
 app.use(express.json());
-
+app.use("/",(req,res)=>{
+  res.send("Server is running");
+})
 app.post("/api/searchFlights", async (req, res) => {
   try {
     // 3. Make sure your request body is as the API expects
