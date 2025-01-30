@@ -1,8 +1,8 @@
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Book from './pages/book';
-import Home from './pages/home'; 
-import Flight from './pages/flight';
+import Book from './pages/book.js';
+import Home from './pages/home.js'; 
+import Flight from './pages/flight.js';
 import DetailsProvider from './pages/context.js';
 function App() {
   return (
