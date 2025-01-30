@@ -122,7 +122,7 @@ const Flight = () => {
       const responses = await Promise.all(
         flights.map(async (leg) => {
           const response = await fetch(
-            "https://tbo-voyagahack-h1l2760zf-sarpit2907s-projects.vercel.app/api/searchFlights",
+            "https://tbo-voyagahack-server.vercel.app/api/searchFlights",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -265,7 +265,7 @@ const Flight = () => {
     setError(null);
     try {
       // Single POST request with multiple segments
-      const response = await fetch("https://tbo-voyagahack-h1l2760zf-sarpit2907s-projects.vercel.app/api/searchFlights", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -317,7 +317,7 @@ const Flight = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://tbo-voyagahack-h1l2760zf-sarpit2907s-projects.vercel.app/api/searchFlights", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -362,7 +362,7 @@ const Flight = () => {
   };
   const fetchCityId = async (cityName) => {
     try {
-      const response = await fetch("https://tbo-voyagahack-h1l2760zf-sarpit2907s-projects.vercel.app/api/citySearch", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/citySearch", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -410,7 +410,7 @@ const Flight = () => {
   
       console.log(`Fetched CityId: ${cityId} for ${cityName}`);
   
-      const response = await fetch("https://tbo-voyagahack-h1l2760zf-sarpit2907s-projects.vercel.app/api/searchSights", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchSights", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

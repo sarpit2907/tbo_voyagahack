@@ -10,6 +10,7 @@ const app = express();
 
 // 1. Allow CORS from your frontend
 app.use(cors());
+app.use(express.json());
 // 2. Parse JSON bodies
 app.post("/api/searchFlights", async (req, res) => {
   try {
@@ -47,32 +48,30 @@ app.post("/api/searchFlights", async (req, res) => {
 });
 app.post("/api/searchSights", async (req, res) => {
   try {
-    const requestBody = req.body;
+    
+    const requestBody = JSON.stringify(req.body); // Force clean JSON format
 
-    // 4. Make the request to TekTravels
     const response = await fetch(
       "https://SightseeingBE.tektravels.com/SightseeingService.svc/rest/Search",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: requestBody,
       }
     );
 
-    // 5. Check if TekTravels responded with an error or not
+    console.log("TekTravels Response Status:", response.status, response.statusText);
+
     if (!response.ok) {
-      // If TekTravels returns 4xx/5xx, log it:
-      console.error("Error from TekTravels:", response.status, response.statusText);
+      console.error("Error from TekTravels API:", await response.text());
       return res.status(response.status).json({ error: "Error from TekTravels API." });
     }
 
-    // 6. Parse the JSON response
     const data = await response.json();
-
-    // 7. Send that data back to your React app
     res.json(data);
   } catch (error) {
-    // 8. Catch any other errors (like network issues)
     console.error("Server error:", error);
     res.status(500).json({ error: "Server error while fetching Sights" });
   }
