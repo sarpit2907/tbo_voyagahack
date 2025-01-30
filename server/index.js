@@ -11,10 +11,6 @@ const app = express();
 // 1. Allow CORS from your frontend
 app.use(cors());
 // 2. Parse JSON bodies
-app.use(express.json());
-app.use("/",(req,res)=>{
-  res.send("Server is running");
-})
 app.post("/api/searchFlights", async (req, res) => {
   try {
     // 3. Make sure your request body is as the API expects
@@ -113,6 +109,9 @@ app.post("/api/citySearch", async (req, res) => {
     res.status(500).json({ error: "Server error while fetching Sights" });
   }
 });
-
+app.use(express.json());
+app.use("/",(req,res)=>{
+  res.send("Server is running");
+})
 // 9. Run your server on port 5000 (or any port you prefer)
 app.listen(3001, () => console.log("Server started on port 3001"));
