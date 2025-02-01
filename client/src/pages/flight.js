@@ -3,7 +3,8 @@ import { useDetails } from "./context.js";
 import axios from "axios";
 const Flight = () => {
   const [activeTab, setActiveTab] = useState("flights");
-  const { travellers, source, destination, date, cost, setCost } = useDetails();
+  const { travellers, source, destination, date, cost, setCost, prompt, setPrompt } =
+    useDetails();
   const [activeBtn, setActiveBtn] = useState("1");
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({});
@@ -127,13 +128,13 @@ const Flight = () => {
       const responses = await Promise.all(
         flights.map(async (leg) => {
           const response = await fetch(
-            "https://tbo-voyagahack-server.vercel.app/api/searchFlights",
+            "http://localhost:3001/api/searchFlights",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 EndUserIp: "192.168.10.10",
-                TokenId: "8017999e-d559-4b26-ba32-35b5fd4982ad",
+                TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
                 AdultCount: travellers.adults,
                 ChildCount: travellers.children,
                 InfantCount: travellers.infants,
@@ -270,12 +271,12 @@ const Flight = () => {
     setError(null);
     try {
       // Single POST request with multiple segments
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
+      const response = await fetch("http://localhost:3001/api/searchFlights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "8017999e-d559-4b26-ba32-35b5fd4982ad",
+          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -322,14 +323,14 @@ const Flight = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
+      const response = await fetch("http://localhost:3001/api/searchFlights", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "8017999e-d559-4b26-ba32-35b5fd4982ad",
+          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -367,14 +368,16 @@ const Flight = () => {
   };
   const fetchCityId = async (cityName) => {
     try {
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/citySearch", {
+      const response = await fetch(
+        "https://tbo-voyagahack-server.vercel.app/api/citySearch",
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             EndUserIp: "192.168.10.26",
-            TokenId: "457c017a-5a6a-457c-a624-a7710e02cf2e",
+            TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
             CountryCode: "IN", // Assuming all cities are in India
             SearchType: "1", // Assuming this is for searching cities
           }),
@@ -433,7 +436,7 @@ const Flight = () => {
           PreferredCurrency: "INR",
           IsBaseCurrencyRequired: false,
           EndUserIp: "192.168.5.56",
-          TokenId: "8017999e-d559-4b26-ba32-35b5fd4982ad",
+          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
           KeyWord: "",
         }),
       });
@@ -698,26 +701,28 @@ const Flight = () => {
                               </div>
 
                               {/* Price and "Add to Trip" Button */}
-                              <div className="text-center w-1/4">
-                                <p className="font-bold text-2xl text-black">
-                                  ₹{totalFare.toLocaleString()}
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    increaseCost(totalFare);
-                                    console.log(
-                                      "Booking these 4 flights together:",
-                                      flights
-                                    );
-                                  }}
-                                  className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
-                                >
-                                  ADD TO TRIP
-                                </button>
-                              </div>
                             </div>
                           );
                         })}
+                        <div className="flex items-baseline justify-center w-full">
+                          <span className="font-bold text-3xl text-black ">
+                            ₹{totalFare.toLocaleString()}
+                          </span>
+                          <span className="text-xs mr-5">Total</span>
+
+                          <button
+                            onClick={() => {
+                              increaseCost(totalFare);
+                              console.log(
+                                "Booking these 4 flights together:",
+                                flights
+                              );
+                            }}
+                            className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
+                          >
+                            ADD TO TRIP
+                          </button>
+                        </div>
                       </div>
                     );
                   })
@@ -877,7 +882,7 @@ const Flight = () => {
                         <button
                           onClick={() => {
                             increaseCost(flight.Fare.PublishedFare);
-                            bookTickets(flight.ResultIndex)
+                            bookTickets(flight.ResultIndex);
                           }}
                           className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
                         >
@@ -1504,7 +1509,13 @@ const Flight = () => {
 
                         {/* View Photos Link */}
                         <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
-                          View All Photos
+                          <span>View All Photos</span>
+                          <span
+                            className="ml-2"
+                            onClick={()=>{setPrompt(`${place.SightseeingName},${place.CityName}`)}}
+                          >
+                            Ask A.I.
+                          </span>
                         </div>
 
                         {/* Location and Distance */}
@@ -1533,8 +1544,12 @@ const Flight = () => {
                           <button className="border border-blue-600 text-blue-600 text-sm font-medium px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition">
                             Know More
                           </button>
-                          <button className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition"
-                          onClick={() => increaseCost(place.Price?.OfferedPriceRoundedOff)}>
+                          <button
+                            className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition"
+                            onClick={() =>
+                              increaseCost(place.Price?.OfferedPriceRoundedOff)
+                            }
+                          >
                             ADD TO TRIP
                           </button>
                         </div>
@@ -1559,17 +1574,15 @@ const Flight = () => {
         alt="Hero Curve"
       /> */}
       <div className="sticky flex justify-between items-center bottom-2 w-auto mx-auto bg-[#267CE2] h-20 rounded-lg text-white ">
-          <div className="font-bold text-xl mx-auto px-5">
-            {`${source[0]}`}
-            {destination.map((dest, index) => (
-              ` - ${dest}`
-            ))}
-            {` Trip | ${date[0]}`}
-          </div>
-          <button className="bg-orange-500 px-5 py-2 w-auto mr-4 text-white rounded-lg">
-            <span className="text-3xl">₹{cost}</span>
-            <span className="text-xs">Total</span>
-          </button>
+        <div className="font-bold text-xl mx-auto px-5">
+          {`${source[0]}`}
+          {destination.map((dest, index) => ` - ${dest}`)}
+          {` Trip | ${date[0]}`}
+        </div>
+        <button className="bg-orange-500 px-5 py-2 w-auto mr-4 text-white rounded-lg">
+          <span className="text-3xl">₹{cost}</span>
+          <span className="text-xs">Total</span>
+        </button>
       </div>
     </div>
   );

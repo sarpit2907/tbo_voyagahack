@@ -12,6 +12,7 @@ const DetailsProvider = ({ children }) => {
     Class: "Economy",
   });
   const [cost, setCost] = useState(0);
+  const [prompt,setPrompt] = useState("")
 
   return (
     <Details.Provider
@@ -25,7 +26,9 @@ const DetailsProvider = ({ children }) => {
         date,
         setDate,
         cost,
-        setCost
+        setCost,
+        prompt,
+        setPrompt
 
       }}
     >
