@@ -3,8 +3,46 @@ import { useDetails } from "./context.js";
 import axios from "axios";
 const Flight = () => {
   const [activeTab, setActiveTab] = useState("flights");
-  const { travellers, source, destination, date, cost, setCost, prompt, setPrompt } =
-    useDetails();
+  const {
+    travellers,
+    source,
+    destination,
+    date,
+    cost,
+    setCost,
+    prompt,
+    setPrompt,
+    result,
+    setResult,
+    setIsChatOpen,
+  } = useDetails();
+  console.log("result:", result);
+  
+  // const getResult = async (query) => {
+  //   try {
+  //     const response = await fetch("http://localhost:3001/api/ai", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         prompt: query || prompt || "No Prompt",
+  //       }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! Status: ${response.status}`);
+  //     }
+      
+  //     const data = await response.json();
+  //     console.log("AI Response:", data.message.parts[0].text);
+  //     setResult(data.message.parts[0].text);
+  //     console.log(result);
+      
+  //   } catch (error) {
+  //     console.error("Error fetching AI response:", error);
+  //   }
+  // };
   const [activeBtn, setActiveBtn] = useState("1");
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({});
@@ -39,9 +77,9 @@ const Flight = () => {
 
   const increaseCost = (amount) => {
     let initialCost = cost;
-    initialCost+=amount;
+    initialCost += amount;
     setCost(Math.ceil(initialCost));
-  }
+  };
 
   const filterSections = [
     {
@@ -134,7 +172,7 @@ const Flight = () => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 EndUserIp: "192.168.10.10",
-                TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
+                TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
                 AdultCount: travellers.adults,
                 ChildCount: travellers.children,
                 InfantCount: travellers.infants,
@@ -264,7 +302,7 @@ const Flight = () => {
     fetchFlights(index);
   };
   const togglesightdestin = (index) => {
-    fetchSights(destination[index],index);
+    fetchSights(destination[index], index);
   };
   const fetchFlightCombinations = async () => {
     setLoading(true);
@@ -276,7 +314,7 @@ const Flight = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
+          TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -330,7 +368,7 @@ const Flight = () => {
         },
         body: JSON.stringify({
           EndUserIp: "192.168.10.10",
-          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
+          TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
           AdultCount: travellers.adults,
           ChildCount: travellers.children,
           InfantCount: travellers.infants,
@@ -377,7 +415,7 @@ const Flight = () => {
           },
           body: JSON.stringify({
             EndUserIp: "192.168.10.26",
-            TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
+            TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
             CountryCode: "IN", // Assuming all cities are in India
             SearchType: "1", // Assuming this is for searching cities
           }),
@@ -419,27 +457,30 @@ const Flight = () => {
 
       console.log(`Fetched CityId: ${cityId} for ${cityName}`);
 
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchSights", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          CityId: cityId,
-          CountryCode: "IN", // Assuming all cities are in India
-          FromDate: `${date[index]}T00:00:00`,
-          ToDate: `${date[index]}T00:00:00`,
-          AdultCount: travellers.adults,
-          ChildCount: travellers.children,
-          ChildAge: null,
-          PreferredLanguage: 0,
-          PreferredCurrency: "INR",
-          IsBaseCurrencyRequired: false,
-          EndUserIp: "192.168.5.56",
-          TokenId: "56d5e653-f5e1-42d2-a243-bf861cd22a79",
-          KeyWord: "",
-        }),
-      });
+      const response = await fetch(
+        "https://tbo-voyagahack-server.vercel.app/api/searchSights",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            CityId: cityId,
+            CountryCode: "IN", // Assuming all cities are in India
+            FromDate: `${date[index]}T00:00:00`,
+            ToDate: `${date[index]}T00:00:00`,
+            AdultCount: travellers.adults,
+            ChildCount: travellers.children,
+            ChildAge: null,
+            PreferredLanguage: 0,
+            PreferredCurrency: "INR",
+            IsBaseCurrencyRequired: false,
+            EndUserIp: "192.168.5.56",
+            TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
+            KeyWord: "",
+          }),
+        }
+      );
 
       const data = await response.json();
       console.log("Sightseeing API Response:", data);
@@ -577,13 +618,10 @@ const Flight = () => {
               </div>
               <div className="flex flex-col mt-4 w-full space-y-4 justify-center items-center">
                 {/* Table Header */}
-                <div className="flex items-center justify-center bg-white text-black font-bold text-lg p-4 w-3/4 rounded-t-md">
-                  <div className=" pl-[280px] w-1/4 text-center">Departure</div>
-                  <div className="pl-56 w-1/4 text-center">Duration</div>
-                  <div className="pl-36 w-1/4 text-center">Arrival</div>
-                  <div className="pl-12 w-1/4 text-center text-blue-600">
-                    Price
-                  </div>
+                <div className="flex items-center justify-center bg-white text-black font-bold text-lg p-4 w-3/4 rounded-t-md pl-60">
+                  <div className="pl-20 w-1/3 text-center">Departure</div>
+                  <div className="pl-12 w-1/3 text-center">Duration</div>
+                  <div className="pl-4 w-1/3 text-center">Arrival</div>
                 </div>
 
                 {/* Loading & Error Handling */}
@@ -673,14 +711,15 @@ const Flight = () => {
                                     : `${stopsCount} stop${
                                         stopsCount > 1 ? "s" : ""
                                       } 
-                           (${leg
-                             .slice(1)
-                             .map((seg) => seg.Origin.Airport.AirportCode)
-                             .join(", ")})`}
+                                               (${leg
+                                                 .slice(1)
+                                                 .map(
+                                                   (seg) =>
+                                                     seg.Origin.Airport
+                                                       .AirportCode
+                                                 )
+                                                 .join(", ")})`}
                                 </p>
-                                <button className="text-blue-500 underline">
-                                  View details
-                                </button>
                               </div>
 
                               {/* Arrival */}
@@ -699,26 +738,27 @@ const Flight = () => {
                                   India
                                 </p>
                               </div>
-
-                              {/* Price and "Add to Trip" Button */}
                             </div>
                           );
                         })}
-                        <div className="flex items-baseline justify-center w-full">
-                          <span className="font-bold text-3xl text-black ">
+
+                        {/* Display Price and "Add to Trip" Button Only Once */}
+                        <div className="flex items-center justify-end mt-4">
+                          <button className="text-blue-600 text-lg mr-44">
+                            View Flight details
+                          </button>
+                          <span className="font-bold text-3xl text-black">
                             ₹{totalFare.toLocaleString()}
                           </span>
-                          <span className="text-xs mr-5">Total</span>
-
                           <button
                             onClick={() => {
                               increaseCost(totalFare);
                               console.log(
-                                "Booking these 4 flights together:",
+                                "Booking these flights together:",
                                 flights
                               );
                             }}
-                            className="bg-orange-500 text-white rounded-md px-4 py-2 mt-2"
+                            className="bg-orange-500 text-white rounded-md px-4 py-2 ml-6"
                           >
                             ADD TO TRIP
                           </button>
@@ -844,7 +884,7 @@ const Flight = () => {
                                 .map((seg) => seg.Origin.Airport.AirportCode)
                                 .join(", ")})`}
                         </p>
-                        <button className="text-blue-500 underline">
+                        <button className="text-blue-600 pt-4 ">
                           View flight details
                         </button>
                       </div>
@@ -1507,12 +1547,18 @@ const Flight = () => {
                           </span>
                         </div>
 
-                        {/* View Photos Link */}
                         <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
                           <span>View All Photos</span>
                           <span
-                            className="ml-2"
-                            onClick={()=>{setPrompt(`${place.SightseeingName},${place.CityName}`)}}
+                            className="ml-2 text-orange-500 font-bold cursor-pointer"
+                            onClick={() => {
+                              const query = `${place.SightseeingName}, ${place.CityName}`;
+                              setPrompt(query);
+                              setIsChatOpen(true); 
+                             console.log("Prompt", prompt);
+                             
+                              // getResult(query); // Trigger AI response
+                            }}
                           >
                             Ask A.I.
                           </span>
@@ -1567,12 +1613,6 @@ const Flight = () => {
         </div>
       </div>
 
-      {/* 3) Position this absolutely at bottom, behind everything (z-0). */}
-      {/* <img
-        className="absolute top-0 left-0 w-full z-0"
-        src="/hero.svg"
-        alt="Hero Curve"
-      /> */}
       <div className="sticky flex justify-between items-center bottom-2 w-auto mx-auto bg-[#267CE2] h-20 rounded-lg text-white ">
         <div className="font-bold text-xl mx-auto px-5">
           {`${source[0]}`}

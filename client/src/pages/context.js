@@ -12,7 +12,9 @@ const DetailsProvider = ({ children }) => {
     Class: "Economy",
   });
   const [cost, setCost] = useState(0);
-  const [prompt,setPrompt] = useState("")
+  const [prompt, setPrompt] = useState("");
+  const [result, setResult] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false); // ✅ Add this state
 
   return (
     <Details.Provider
@@ -28,8 +30,11 @@ const DetailsProvider = ({ children }) => {
         cost,
         setCost,
         prompt,
-        setPrompt
-
+        setPrompt,
+        result,
+        setResult,
+        isChatOpen, // ✅ Make chatbox state globally available
+        setIsChatOpen,
       }}
     >
       {children}

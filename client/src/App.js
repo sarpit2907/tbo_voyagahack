@@ -6,7 +6,6 @@ import Flight from './pages/flight.js';
 import DetailsProvider from './pages/context.js';
 function App() {
   return (
-    <DetailsProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -14,7 +13,6 @@ function App() {
         <Route path="/flight" element={<Flight />} />
       </Routes>
     </BrowserRouter>
-  </DetailsProvider>
   
   );
 }
