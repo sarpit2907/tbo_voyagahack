@@ -52,7 +52,7 @@ const Trip = () => {
 
   const getResult = async (query) => {
     try {
-      const response = await fetch("http://localhost:3001/api/ai", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/ai", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +81,7 @@ const Trip = () => {
         className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center"
         onClick={() => setIsChatOpen(!isChatOpen)}
       >
-        <IoChatbubbleEllipsesOutline size={28} />
+        <img src="/chatbot.svg" alt="Chatbot" className="w-10 h-auto" />
       </button>
   
       {/* Chatbox Window */}

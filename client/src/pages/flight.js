@@ -17,10 +17,10 @@ const Flight = () => {
     setIsChatOpen,
   } = useDetails();
   console.log("result:", result);
-  
+
   // const getResult = async (query) => {
   //   try {
-  //     const response = await fetch("http://localhost:3001/api/ai", {
+  //     const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/ai", {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/json",
@@ -33,12 +33,12 @@ const Flight = () => {
   //     if (!response.ok) {
   //       throw new Error(`HTTP error! Status: ${response.status}`);
   //     }
-      
+
   //     const data = await response.json();
   //     console.log("AI Response:", data.message.parts[0].text);
   //     setResult(data.message.parts[0].text);
   //     console.log(result);
-      
+
   //   } catch (error) {
   //     console.error("Error fetching AI response:", error);
   //   }
@@ -50,6 +50,7 @@ const Flight = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sightseeingOptions, setSightseeingOptions] = useState([]);
+  const [HotelOptions, setHotelOptions] = useState([]);
   const airportToCityMap = {
     BOM: "Mumbai",
     DEL: "Delhi",
@@ -70,6 +71,7 @@ const Flight = () => {
     BBI: "Bhubaneswar",
     IDR: "Indore",
     NAG: "Nagpur",
+    VNS: "Varanasi",
   };
 
   // console.log(new Date(date[0]).toISOString().split("T")[0] + "T00:00:00");
@@ -166,7 +168,7 @@ const Flight = () => {
       const responses = await Promise.all(
         flights.map(async (leg) => {
           const response = await fetch(
-            "http://localhost:3001/api/searchFlights",
+            "https://tbo-voyagahack-server.vercel.app/api/searchFlights",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -301,6 +303,9 @@ const Flight = () => {
   const toggleDestination = (index) => {
     fetchFlights(index);
   };
+  const toggleHotelDestination = (index) => {
+    fetchHotels(destination[index],index);
+  };
   const togglesightdestin = (index) => {
     fetchSights(destination[index], index);
   };
@@ -309,7 +314,7 @@ const Flight = () => {
     setError(null);
     try {
       // Single POST request with multiple segments
-      const response = await fetch("http://localhost:3001/api/searchFlights", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -361,7 +366,7 @@ const Flight = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3001/api/searchFlights", {
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -406,39 +411,211 @@ const Flight = () => {
   };
   const fetchCityId = async (cityName) => {
     try {
-      const response = await fetch(
-        "https://tbo-voyagahack-server.vercel.app/api/citySearch",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            EndUserIp: "192.168.10.26",
-            TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
-            CountryCode: "IN", // Assuming all cities are in India
-            SearchType: "1", // Assuming this is for searching cities
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data && data.Destinations && Array.isArray(data.Destinations)) {
-        const foundCity = data.Destinations.find(
-          (c) => c.CityName.toLowerCase() === cityName.toLowerCase()
+        const response = await fetch(
+            "https://tbo-voyagahack-server.vercel.app/api/citySearch",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    EndUserIp: "192.168.10.26",
+                    TokenId: "40e62f3a-8a2f-4282-8db9-f06811833be8",
+                    CountryCode: "IN",
+                    SearchType: "1",
+                    CityName: cityName,  // ✅ Added CityName to request
+                }),
+            }
         );
 
-        return foundCity ? foundCity.DestinationId : null;
-      } else {
+        const data = await response.json();
+        if (data?.Destinations?.length > 0) {
+            const foundCity = data.Destinations.find(
+                (c) => c.CityName.toLowerCase() === cityName.toLowerCase()
+            );
+            return foundCity ? foundCity.DestinationId : null;
+        }
         console.error("City search response invalid:", data);
         return null;
-      }
     } catch (error) {
-      console.error("Error fetching CityId:", error);
-      return null;
+        console.error("Error fetching CityId:", error);
+        return null;
     }
-  };
+};
+
+// Fetch hotel codes (only first 10)
+const fetchHotelCodes = async (cityID) => {
+    try {
+        const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/hotelcodeSearch", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + btoa("hackathontest:Hac@98910186")
+            },
+            body: JSON.stringify({
+                CityCode: cityID,
+                IsDetailedResponse: "true",
+            }),
+        });
+
+        const data = await response.json();
+        if (data?.hotelCodes?.length > 0) {
+            return data.hotelCodes.slice(0, 200);  // ✅ Return only first 10 hotel codes
+        }
+        console.error("No hotel codes found:", data);
+        return null;
+    } catch (error) {
+        console.error("Error fetching HotelCodes:", error);
+        return null;
+    }
+};
+
+// Fetch hotel details (one at a time)
+const fetchHotelDetails = async (hotelCodes) => {
+  try {
+      if (!hotelCodes || hotelCodes.length === 0) {
+          throw new Error("Hotel codes are required");
+      }
+
+      // Fetch details one by one (API only accepts one hotel at a time)
+      const hotelDetailsPromises = hotelCodes.map(async (code) => {
+          const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/HotelDetails", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic " + btoa("hackathontest:Hac@98910186"),
+              },
+              body: JSON.stringify({
+                  Hotelcodes: code,  // ✅ API requires a single hotel code at a time
+                  Language: "EN",
+              }),
+          });
+
+          const data = await response.json();
+          if (data.hotelDetails) {
+              return data.hotelDetails;
+          } else {
+              console.error(`Failed to fetch details for Hotel ${code}:`, data);
+              return null;
+          }
+      });
+
+      const hotelDetails = await Promise.all(hotelDetailsPromises);
+      return hotelDetails.filter((hotel) => hotel !== null);  // ✅ Remove null values
+  } catch (error) {
+      console.error("Error fetching hotel details:", error);
+      return [];
+  }
+};
+
+const fetchHotels = async (airportCode, index = 0) => {
+  setLoading(true);
+  setError(null);
+  console.log("Fetching CityId for:", airportCode);
+
+  try {
+      const cityName = airportToCityMap[airportCode.toUpperCase()];
+      if (!cityName) {
+          console.error(`No city mapped for airport code: ${airportCode}`);
+          setError(`No city found for airport code: ${airportCode}`);
+          setLoading(false);
+          return;
+      }
+
+      const cityId = await fetchCityId(cityName);
+      if (!cityId) {
+          console.error(`CityId not found for ${cityName}`);
+          setError(`CityId not found for ${cityName}`);
+          setLoading(false);
+          return;
+      }
+      console.log(`City ID for ${cityName}: ${cityId}`);
+
+      const hotelCodesList = await fetchHotelCodes(cityId);
+      if (!hotelCodesList || hotelCodesList.length === 0) {
+          console.error(`No hotel codes found for cityId: ${cityId}`);
+          setError(`No hotels found in ${cityName}`);
+          setLoading(false);
+          return;
+      }
+
+      console.log(`Fetching hotel details for codes: ${hotelCodesList.join(", ")}`);
+      const hotelDetails = await fetchHotelDetails(hotelCodesList);
+      if (!hotelDetails || hotelDetails.length === 0) {
+          console.error(`Failed to fetch details for hotels in ${cityName}`);
+          setError(`Failed to retrieve hotel details.`);
+          setLoading(false);
+          return;
+      }
+
+      console.log("Hotel Details Retrieved:", hotelDetails);
+
+      const checkInDate = new Date(date[index]); 
+      const checkOutDate = new Date(checkInDate);
+      checkOutDate.setDate(checkOutDate.getDate() + 1);
+
+      console.log(`Fetching availability for hotels on ${checkInDate.toISOString().split("T")[0]}`);
+
+      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchHotels", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Basic " + btoa("hackathontest:Hac@98910186")
+          },
+          body: JSON.stringify({
+              CheckIn: checkInDate.toISOString().split("T")[0],
+              CheckOut: checkOutDate.toISOString().split("T")[0],
+              HotelCodes: hotelCodesList, // ✅ Send as an array
+              GuestNationality: "IN",
+              PaxRooms: [
+                  {
+                      Adults: travellers.adults,
+                      Children: travellers.children,
+                      ChildrenAges: []
+                  }
+              ],
+              ResponseTime: 23.0,
+              IsDetailedResponse: false,
+              Filters: {
+                  Refundable: false,
+                  NoOfRooms: 1,
+                  MealType: "All"
+              }
+          })
+      });
+
+      const data = await response.json();
+      console.log("Hotel Availability API Response:", data);
+
+      if (data.Status?.Code !== 200) {
+          console.error(`Hotel API Error: ${data.Status.Description}`);
+          setError(`Hotel API Error: ${data.Status.Description}`);
+          setHotelOptions([]);
+          return;
+      }
+
+      // ✅ Merging Hotel Details with Availability
+      const hotelsWithCompleteData = hotelDetails.map((hotel) => {
+          const availability = data.HotelResult.find((avail) => avail.HotelCode === hotel.HotelCode);
+          return {
+              ...hotel,
+              Rooms: availability ? availability.Rooms : [],  // ✅ Merge available rooms
+              Currency: availability ? availability.Currency : "USD",
+          };
+      });
+
+      console.log("Final Hotels with Details and Availability:", hotelsWithCompleteData);
+      setHotelOptions([...hotelsWithCompleteData]); 
+      console.log(HotelOptions);
+      
+
+  } catch (err) {
+      console.error("Error fetching hotel details:", err);
+      setError("An error occurred while fetching hotel data. Please try again.");
+  } finally {
+      setLoading(false);
+  }
+};
 
   const fetchSights = async (airportCode, index = 0) => {
     setLoading(true);
@@ -936,123 +1113,47 @@ const Flight = () => {
             </div>
           )}
           {activeBtn === "3" && (
-            <div className="w-full flex flex-col items-center">
-              <p>Select Your Itinerary</p>
-              <p className="text-2xl">Showing Results For</p>
+  <div className="w-full flex flex-col items-center">
+    <p>Select Your Itinerary</p>
+    <p className="text-2xl">Showing Results For</p>
 
-              <div className="flex space-x-5 my-5">
-                {flights.map((flight, index) => (
-                  <button
-                    key={index}
-                    className={`${
-                      activeDstn === flight.to
-                        ? "bg-blue-700 text-white"
-                        : "bg-white text-black"
-                    } rounded-md px-4 py-2 transition-colors duration-200`}
-                    onClick={() => {
-                      // fetchFlightsByDestination(flight.to);
-                    }}
-                  >
-                    <p className="text-3xl">
-                      {flight.from}-{flight.to}
-                    </p>
-                    <span className="text-s">{flight.date}</span>
-                  </button>
-                ))}
-              </div>
+    {/* Flight Buttons */}
+    <div className="flex space-x-5 my-5">
+      {flights.map((flight, index) => (
+        <button
+          key={index}
+          className={`${
+            activeDstn === flight.to ? "bg-blue-700 text-white" : "bg-white text-black"
+          } rounded-md px-4 py-2 transition-colors duration-200`}
+          onClick={() => {
+            fetchFlightsByDestination(flight.to);
+            toggleHotelDestination(index);
+          }}
+        >
+          <p className="text-3xl">{flight.from}-{flight.to}</p>
+          <span className="text-sm">{flight.date}</span>
+        </button>
+      ))}
+    </div>
 
-              <div className="flex w-3/5 items-center justify-evenly space-x-2">
-                <div>
-                  <label htmlFor="city" className="block">
-                    CITY
-                  </label>
-                  <input
-                    type="text"
-                    id="city"
-                    value={activeDstn}
-                    disabled={true}
-                    className="bg-white rounded-md mt-1 px-2 text-lg"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="fromDate" className="block">
-                    CHECKIN
-                  </label>
-                  <input
-                    type="date"
-                    id="fromDate"
-                    className="bg-white rounded-md mt-1 px-2 text-lg"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="toDate" className="block">
-                    CHECKOUT
-                  </label>
-                  <input
-                    type="date"
-                    id="toDate"
-                    className="bg-white rounded-md mt-1 px-2 text-lg"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="fromInput" className="block">
-                    Guests and Rooms
-                  </label>
-                  <input
-                    type="text"
-                    id="fromInput"
-                    value={activeDstn}
-                    disabled={true}
-                    className="bg-white rounded-md mt-1 px-2 text-lg"
-                  />
-                </div>
-              </div>
+    {/* Sort Options */}
+    <div className="flex w-full bg-white mt-5 h-10 items-center justify-center space-x-4">
+      <div className="text-lg font-bold">Sort By :</div>
+      {["Most Popular", "Price: Low to High", "Price: High to Low", "Reviews: Highest First"].map((sortOption) => (
+        <button
+          key={sortOption}
+          className={`${
+            activeSort === sortOption ? "bg-red-600 text-white" : "bg-white text-black"
+          } rounded-md px-4 py-2 transition-colors duration-200`}
+          onClick={() => setActiveSort(sortOption)}
+        >
+          {sortOption}
+        </button>
+      ))}
+    </div>
 
-              <div className="flex w-full bg-white mt-5 h-10 items-center justify-center space-x-4">
-                <div className="text-lg font-bold">Sort By :</div>
-                <button
-                  className={`${
-                    activeSort === "Most Popular"
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-black"
-                  } rounded-md px-4 py-2 transition-colors duration-200`}
-                  onClick={() => setActiveSort("Most Popular")}
-                >
-                  Most Popular
-                </button>
-                <button
-                  className={`${
-                    activeSort === "Price: Low to High"
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-black"
-                  } rounded-md px-4 py-2 transition-colors duration-200`}
-                  onClick={() => setActiveSort("Price: Low to High")}
-                >
-                  Price: Low to High
-                </button>
-                <button
-                  className={`${
-                    activeSort === "Price: High to Low"
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-black"
-                  } rounded-md px-4 py-2 transition-colors duration-200`}
-                  onClick={() => setActiveSort("Price: High to Low")}
-                >
-                  Price: High to Low
-                </button>
-                <button
-                  className={`${
-                    activeSort === "Reviews: Highest First"
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-black"
-                  } rounded-md px-4 py-2 transition-colors duration-200`}
-                  onClick={() => setActiveSort("Reviews: Highest First")}
-                >
-                  Reviews: Highest First
-                </button>
-              </div>
-
-              <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
+    {/* Filter Section */}
+    <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
                 <div className="w-1/5 bg-white rounded-lg pl-3 font-semibold text-gray-700">
                   <div className="flex justify-between items-center p-3 border-b border-gray-200">
                     <span className="text-lg">FILTERS</span>
@@ -1097,309 +1198,90 @@ const Flight = () => {
                     ))}
                   </div>
                 </div>
-                <div className="flex flex-col space-y-4 w-4/5 pb-8">
-                  {/* Hotel Card #1 */}
-                  <div className="flex flex-row w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                    <img
-                      className="w-2/5 object-cover px-3 py-3 rounded-sm"
-                      src="https://images.pexels.com/photos/5650026/pexels-photo-5650026.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-                      alt="Hotel"
-                    />
-                    <div className="p-4">
-                      <div className="flex flex-row justify-between items-center">
-                        <span className="bg-yellow-400 text-white text-xs px-2 py-1 rounded">
-                          5 ★ Hotel
-                        </span>
-                        <span className="text-gray-600 text-sm">
-                          80 Ratings |{" "}
-                          <span className="text-green-500 font-bold">
-                            4.6/5
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex flex-row justify-between space-x-4">
-                        <div className="w-4/5">
-                          <h2 className="mt-2 text-xl font-semibold text-gray-800">
-                            The Leela Bhartiya City Bengaluru
-                          </h2>
-                          <p className="text-sm text-gray-500">Tirumanahalli</p>
-                          <ul className="mt-2 text-sm text-gray-600 space-y-1">
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Free cancellation
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Breakfast Included
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              10% off on spa session
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="flex flex-col justify-between items-center mt-2">
-                          <div>
-                            <span className="text-2xl font-bold text-gray-800">
-                              ₹9,995
-                            </span>
-                            <p className="text-xs text-gray-500">
-                              + ₹3,040 taxes & fees per night
-                            </p>
-                          </div>
-                          <div className="w-full flex flex-col space-y-2 mt-9 justify-start">
-                            <button className="text-blue-600 text-sm font-medium border-2 border-blue-600 px-2 py-1 rounded">
-                              View Plans
-                            </button>
-                            <button className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-medium">
-                              Add to Trip
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-row w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                    <img
-                      className="w-2/5 object-cover px-3 py-3 rounded-sm"
-                      src="https://images.pexels.com/photos/5650026/pexels-photo-5650026.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-                      alt="Hotel"
-                    />
-                    <div className="p-4">
-                      <div className="flex flex-row justify-between items-center">
-                        <span className="bg-yellow-400 text-white text-xs px-2 py-1 rounded">
-                          5 ★ Hotel
-                        </span>
-                        <span className="text-gray-600 text-sm">
-                          80 Ratings |{" "}
-                          <span className="text-green-500 font-bold">
-                            4.6/5
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex flex-row justify-between space-x-4">
-                        <div className="w-4/5">
-                          <h2 className="mt-2 text-xl font-semibold text-gray-800">
-                            The Leela Bhartiya City Bengaluru
-                          </h2>
-                          <p className="text-sm text-gray-500">Tirumanahalli</p>
-                          <ul className="mt-2 text-sm text-gray-600 space-y-1">
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Free cancellation
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Breakfast Included
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              10% off on spa session
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="flex flex-col justify-between items-center mt-2">
-                          <div>
-                            <span className="text-2xl font-bold text-gray-800">
-                              ₹10,000
-                            </span>
-                            <p className="text-xs text-gray-500">
-                              + ₹3,040 taxes & fees per night
-                            </p>
-                          </div>
-                          <div className="w-full flex flex-col space-y-2 mt-9 justify-start">
-                            <button className="text-blue-600 text-sm font-medium border-2 border-blue-600 px-2 py-1 rounded">
-                              View Plans
-                            </button>
-                            <button className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-medium">
-                              Add to Trip
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-row w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                    <img
-                      className="w-2/5 object-cover px-3 py-3 rounded-sm"
-                      src="https://images.pexels.com/photos/5650026/pexels-photo-5650026.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-                      alt="Hotel"
-                    />
-                    <div className="p-4">
-                      <div className="flex flex-row justify-between items-center">
-                        <span className="bg-yellow-400 text-white text-xs px-2 py-1 rounded">
-                          5 ★ Hotel
-                        </span>
-                        <span className="text-gray-600 text-sm">
-                          80 Ratings |{" "}
-                          <span className="text-green-500 font-bold">
-                            4.6/5
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex flex-row justify-between space-x-4">
-                        <div className="w-4/5">
-                          <h2 className="mt-2 text-xl font-semibold text-gray-800">
-                            The Leela Bhartiya City Bengaluru
-                          </h2>
-                          <p className="text-sm text-gray-500">Tirumanahalli</p>
-                          <ul className="mt-2 text-sm text-gray-600 space-y-1">
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Free cancellation
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Breakfast Included
-                            </li>
-                            <li className="flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-green-500 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              10% off on spa session
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="flex flex-col justify-between items-center mt-2">
-                          <div>
-                            <span className="text-2xl font-bold text-gray-800">
-                              ₹9,995
-                            </span>
-                            <p className="text-xs text-gray-500">
-                              + ₹3,040 taxes & fees per night
-                            </p>
-                          </div>
-                          <div className="w-full flex flex-col space-y-2 mt-9 justify-start">
-                            <button className="text-blue-600 text-sm font-medium border-2 border-blue-600 px-2 py-1 rounded">
-                              View Plans
-                            </button>
-                            <button className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-medium">
-                              Add to Trip
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
+      {/* Hotel List */}
+      <div className="flex flex-col space-y-4 w-4/5 pb-8">
+  {loading ? (
+    <p>Loading hotels...</p>
+  ) : error ? (
+    <p className="text-red-500">{error}</p>
+  ) : (
+    HotelOptions
+      .filter((hotel) => hotel.Images?.length > 0 && hotel.Rooms?.length > 0) // ✅ Filters hotels with images & rooms
+      .map((hotel, index) => (
+        <div key={index} className="flex flex-row w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 p-4">
+          {/* Left: Hotel Image */}
+          <div className="w-2/5 relative">
+            <img
+              className="object-cover w-full h-full rounded-md"
+              src={hotel.Images?.[3] || "https://plus.unsplash.com/premium_photo-1661923725782-f73c990fbddf?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bHV4dXJ5JTIwaG90ZWx8ZW58MHx8MHx8fDA%3D"}
+              alt={hotel.HotelName || "Hotel Image"}
+            />
+            <button className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-1 rounded-md text-sm">
+              View All Photos
+            </button>
+          </div>
+
+          {/* Right: Hotel Details */}
+          <div className="w-3/5 p-4 flex flex-col justify-between">
+            {/* Top: Hotel Rating & Name */}
+            <div className="flex justify-between items-center">
+              <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded-md flex items-center">
+                {hotel.HotelRating || "N/A"} ★ Hotel
+              </span>
+              <div className="text-sm text-gray-500 flex items-center">
+                <span>{hotel.Reviews || "N/A"} Ratings | </span>
+                <span className="ml-1 bg-green-600 text-white px-2 py-0.5 rounded-md text-xs font-bold">
+                  {hotel.Rating || "N/A"}/5
+                </span>
               </div>
             </div>
-          )}
+
+            {/* Hotel Name & Address */}
+            <h2 className="mt-2 text-xl font-semibold text-gray-800">
+              {hotel.HotelName}
+            </h2>
+            <p className="text-sm text-blue-600 cursor-pointer">{hotel.Address || "Location not available"}</p>
+
+            {/* Features & Hotel Amenities */}
+            <ul className="mt-2 text-sm text-gray-600 space-y-1">
+              {/* Hotel Facilities (Dynamic Amenities) */}
+              {hotel.HotelFacilities?.slice(0, 3).map((facility, idx) => (
+                <li key={idx} className="flex items-center">✔ {facility}</li>
+              )) || <li className="flex items-center text-gray-400">No amenities available</li>}
+            </ul>
+
+            {/* Price & Buttons */}
+            <div className="flex justify-between items-end mt-4">
+              <div>
+                <p className="text-2xl font-bold text-gray-800">
+                  ₹{hotel.Rooms?.[0]?.TotalFare || "N/A"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  + ₹{hotel.Rooms?.[0]?.TotalTax || "N/A"} taxes & fees per night
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <button className="border border-blue-600 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
+                  View Plans
+                </button>
+                <button className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-medium" onClick={() => {
+                                    increaseCost(hotel.Rooms?.[0]?.TotalFare + hotel.Rooms?.[0]?.TotalTax);
+                                  }}>
+                  ADD TO TRIP
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))
+  )}
+</div>
+
+    </div>
+  </div>
+)}
+
           {activeBtn === "4" && (
             <div className="w-full flex flex-col items-center">
               {/* Header */}
@@ -1523,90 +1405,90 @@ const Flight = () => {
 
                 {/* Sightseeing Cards */}
                 <div className="flex flex-wrap justify-center gap-6 w-4/5 pb-8">
-                  {Array.isArray(sightseeingOptions) ? (
-                    sightseeingOptions.map((place, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 w-[380px] p-4"
-                      >
-                        {/* Title */}
-                        <h2 className="text-xl font-bold text-gray-900">
-                          {place.SightseeingName}
-                        </h2>
+  {loading ? (
+    <p>Loading sightseeing options...</p>
+  ) : error ? (
+    <p className="text-red-500">{error}</p>
+  ) : sightseeingOptions && Array.isArray(sightseeingOptions) && sightseeingOptions.length > 0 ? (
+    sightseeingOptions.map((place, index) => (
+      <div
+        key={index}
+        className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 w-[380px] p-4"
+      >
+        {/* Title */}
+        <h2 className="text-xl font-bold text-gray-900">
+          {place.SightseeingName || "Unnamed Place"}
+        </h2>
 
-                        {/* Image Section */}
-                        <div className="relative w-full h-48 rounded-md overflow-hidden mt-2">
-                          <img
-                            src={place.ImageList?.[0] || "/default-image.jpg"}
-                            alt={place.SightseeingName}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Price Tag */}
-                          <span className="absolute top-2 right-2 bg-white text-black font-bold px-3 py-1 rounded-md shadow-md">
-                            ₹{place.Price?.OfferedPriceRoundedOff} onwards
-                          </span>
-                        </div>
+        {/* Image Section */}
+        <div className="relative w-full h-48 rounded-md overflow-hidden mt-2">
+          <img
+            src={place.ImageList?.[0] || "/default-image.jpg"}
+            alt={place.SightseeingName || "Sightseeing Image"}
+            className="w-full h-full object-cover"
+          />
+          {/* Price Tag */}
+          <span className="absolute top-2 right-2 bg-white text-black font-bold px-3 py-1 rounded-md shadow-md">
+            ₹{place.Price?.OfferedPriceRoundedOff || "N/A"} onwards
+          </span>
+        </div>
 
-                        <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
-                          <span>View All Photos</span>
-                          <span
-                            className="ml-2 text-orange-500 font-bold cursor-pointer"
-                            onClick={() => {
-                              const query = `${place.SightseeingName}, ${place.CityName}`;
-                              setPrompt(query);
-                              setIsChatOpen(true); 
-                             console.log("Prompt", prompt);
-                             
-                              // getResult(query); // Trigger AI response
-                            }}
-                          >
-                            Ask A.I.
-                          </span>
-                        </div>
+        <div className="text-center text-sm text-blue-500 mt-1 cursor-pointer">
+          <span>View All Photos</span>
+          <span
+            className="ml-2 text-orange-500 font-bold cursor-pointer"
+            onClick={() => {
+              const query = `${place.SightseeingName || "Unknown Place"}, ${place.CityName || "Unknown City"}`;
+              setPrompt(query);
+              setIsChatOpen(true);
+              console.log("Prompt:", query);
+            }}
+          >
+            Ask A.I.
+          </span>
+        </div>
 
-                        {/* Location and Distance */}
-                        <div className="flex justify-between items-center text-sm mt-2">
-                          <p>
-                            Located in:{" "}
-                            <span className="text-blue-600 font-medium">
-                              {place.CityName}
-                            </span>
-                          </p>
-                          <p className="text-gray-500">8km from city center</p>
-                        </div>
+        {/* Location and Distance */}
+        <div className="flex justify-between items-center text-sm mt-2">
+          <p>
+            Located in:{" "}
+            <span className="text-blue-600 font-medium">
+              {place.CityName || "Unknown City"}
+            </span>
+          </p>
+          <p className="text-gray-500">{place.DurationDescription[0].TotalDuration}</p>
+        </div>
 
-                        {/* Description */}
-                        <p className="text-gray-700 text-sm mt-2 line-clamp-3">
-                          {place.TourDescription
-                            ? place.TourDescription.replace(
-                                /<\/?[^>]+(>|$)/g,
-                                ""
-                              ).substring(0, 180) + "..."
-                            : "No description available."}
-                        </p>
+        {/* Description */}
+        <p className="text-gray-700 text-sm mt-2 line-clamp-3">
+          {place.TourDescription
+            ? place.TourDescription.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 180) + "..."
+            : "No description available."}
+        </p>
 
-                        {/* Buttons Section */}
-                        <div className="flex justify-between mt-4">
-                          <button className="border border-blue-600 text-blue-600 text-sm font-medium px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition">
-                            Know More
-                          </button>
-                          <button
-                            className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition"
-                            onClick={() =>
-                              increaseCost(place.Price?.OfferedPriceRoundedOff)
-                            }
-                          >
-                            ADD TO TRIP
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xl text-gray-600 text-center">
-                      No sightseeing options available.
-                    </p>
-                  )}
-                </div>
+        {/* Buttons Section */}
+        <div className="flex justify-between mt-4">
+          <button className="border border-blue-600 text-blue-600 text-sm font-medium px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition">
+            Know More
+          </button>
+          <button
+            className="bg-orange-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-orange-600 transition"
+            onClick={() =>
+              increaseCost(place.Price?.OfferedPriceRoundedOff || 0)
+            }
+          >
+            ADD TO TRIP
+          </button>
+        </div>
+      </div>
+    ))
+  ) : (
+    <p className="text-xl text-gray-600 text-center">
+      No sightseeing options available.
+    </p>
+  )}
+</div>
+
               </div>
             </div>
           )}

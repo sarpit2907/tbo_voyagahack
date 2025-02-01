@@ -14,7 +14,14 @@ const genAI = new GoogleGenerativeAI(
 // const cors = require("cors");
 
 const app = express();
+const TBO_API_BASE_URL = "http://api.tbotechnology.in/TBOHolidays_HotelAPI";
+const API_USERNAME = "hackathontest";
+const API_PASSWORD = "Hac@98910186";
 
+// Function to get Base64 encoded Auth
+const getBasicAuthHeader = () => {
+    return "Basic " + Buffer.from(`${API_USERNAME}:${API_PASSWORD}`).toString("base64");
+};
 // 1. Allow CORS from your frontend
 app.use(cors());
 app.use(express.json());
@@ -132,6 +139,128 @@ app.post("/api/citySearch", async (req, res) => {
     res.status(500).json({ error: "Server error while fetching Sights" });
   }
 });
+app.post("/api/hotelDetails", async (req, res) => {
+  try {
+      const { Hotelcodes } = req.body;
+       console.log(Hotelcodes);
+       
+      if (!Hotelcodes) {
+          return res.status(400).json({ error: "Invalid request: HotelCode is required" });
+      }
+
+      console.log("Fetching hotel details for:", Hotelcodes);
+
+      const response = await fetch("http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelDetails", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              Authorization: getBasicAuthHeader(),
+          },
+          body: JSON.stringify({
+              Hotelcodes: Hotelcodes, // Correct field name from API docs
+              Language: "EN",
+          }),
+      });
+
+      const data = await response.json();
+
+      if (data.Status?.Code === 200 && data.HotelDetails) {
+          return res.json({ hotelDetails: data.HotelDetails[0] }); // Send first hotel detail
+      } else {
+          console.error(`Failed to fetch details for HotelCode: ${HotelCode}`, data);
+          return res.status(404).json({ error: "Hotel details not found", response: data });
+      }
+
+  } catch (error) {
+      console.error("Error fetching hotel details:", error);
+      res.status(500).json({ error: "Internal server error" });
+  }
+});
+app.post("/api/hotelcodeSearch", async (req, res) => {
+  try {
+      const { CityCode } = req.body;
+      if (!CityCode) {
+          return res.status(400).json({ error: "CityCode is required" });
+      }
+
+      const response = await fetch("http://api.tbotechnology.in/TBOHolidays_HotelAPI/TBOHotelCodeList", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": getBasicAuthHeader()
+          },
+          body: JSON.stringify({
+              CityCode,
+              IsDetailedResponse: "true"
+          })
+      });
+
+      const data = await response.json();
+
+      if (!data || !data.Hotels) {
+          return res.status(404).json({ error: "No hotels found for the given city." });
+      }
+
+      const hotelCodes = data.Hotels.map(hotel => hotel.HotelCode);
+      res.json({ hotelCodes });
+
+  } catch (error) {
+      console.error("Error fetching hotel codes:", error);
+      res.status(500).json({ error: "Failed to fetch hotel codes" });
+  }
+});
+app.post("/api/searchHotels", async (req, res) => {
+  try {
+      const {
+          CheckIn,
+          CheckOut,
+          HotelCodes,
+          GuestNationality,
+          PaxRooms,
+          ResponseTime,
+          IsDetailedResponse,
+          Filters
+      } = req.body;
+
+      if (!HotelCodes || HotelCodes.length === 0) {
+          return res.status(400).json({ error: "HotelCodes cannot be empty" });
+      }
+
+      // Convert array to comma-separated string if needed
+      const hotelCodesString = Array.isArray(HotelCodes) ? HotelCodes.join(",") : HotelCodes;
+
+      const response = await fetch(`${TBO_API_BASE_URL}/Search`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": getBasicAuthHeader()
+          },
+          body: JSON.stringify({
+              CheckIn,
+              CheckOut,
+              HotelCodes: hotelCodesString,
+              GuestNationality,
+              PaxRooms,
+              ResponseTime,
+              IsDetailedResponse,
+              Filters
+          })
+      });
+
+      const data = await response.json();
+
+      if (!data || data.Status.Code !== 200) {
+          return res.status(400).json({ error: data.Status.Description || "API error" });
+      }
+
+      res.json(data);
+
+  } catch (error) {
+      console.error("Error searching hotels:", error);
+      res.status(500).json({ error: "Failed to fetch hotel data" });
+  }
+});
+
 
 app.post("/api/ai", async (req, res) => {
   try {
