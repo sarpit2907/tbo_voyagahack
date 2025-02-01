@@ -312,8 +312,8 @@ const Flight = () => {
   const fetchFlightCombinations = async () => {
     setLoading(true);
     setError(null);
+  
     try {
-      // Single POST request with multiple segments
       const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -325,8 +325,7 @@ const Flight = () => {
           InfantCount: travellers.infants,
           DirectFlight: "false",
           OneStopFlight: "false",
-          // IMPORTANT: For multiple segments (multi-city), set JourneyType to "3"
-          JourneyType: "3",
+          JourneyType: "3", // Multi-city trip
           PreferredAirlines: null,
           Segments: flights.map((flight) => ({
             Origin: flight.from,
@@ -338,24 +337,29 @@ const Flight = () => {
           Sources: null,
         }),
       });
-
+  
       const jsonData = await response.json();
-
-      // You’ll typically get one set of "combined itineraries" for multi-city.
-      // Each returned "itinerary" should contain multiple segments corresponding
-      // to VNS->BLR, BLR->DEL, etc.
-
-      // Adjust this according to how the API actually returns results
-      const possibleItineraries = jsonData?.Response?.Results[0] || [];
-
+  
+      // ✅ Prevents TypeError by checking if Results exists and is an array
+      if (!jsonData?.Response?.Results || !Array.isArray(jsonData.Response.Results)) {
+        console.error("Invalid API response format:", jsonData);
+        setError("No flight results found.");
+        setFlightCombinations([]);
+        return;
+      }
+  
+      // ✅ Ensures we only access [0] if the array is not empty
+      const possibleItineraries = jsonData.Response.Results.length > 0 ? jsonData.Response.Results[0] : [];
+  
       setFlightCombinations(possibleItineraries);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching flight combinations:", err);
       setError("Error fetching flight combinations. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (activeBtn === "1") {

@@ -23,7 +23,12 @@ const getBasicAuthHeader = () => {
     return "Basic " + Buffer.from(`${API_USERNAME}:${API_PASSWORD}`).toString("base64");
 };
 // 1. Allow CORS from your frontend
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 // 2. Parse JSON bodies
 app.post("/api/searchFlights", async (req, res) => {

@@ -2,7 +2,6 @@ import React, { useState, forwardRef } from "react";
 import { useDetails } from "./context.js";
 import { Link } from "react-router-dom";
 
-
 import { FaCalendarAlt } from "react-icons/fa";
 
 const Book = () => {
@@ -16,55 +15,39 @@ const Book = () => {
     date,
     setDate,
   } = useDetails();
-
   const airportSuggestions = [
-    { code: "BOM", city: "Mumbai" },
     { code: "DEL", city: "New Delhi" },
-    { code: "BLR", city: "Bengaluru" },
-    { code: "HYD", city: "Hyderabad" },
-    { code: "CCU", city: "Kolkata" },
     { code: "VNS", city: "Varanasi" },
+    { code: "BOM", city: "Mumbai" },
+    { code: "CCU", city: "Kolkata" },
     { code: "LKO", city: "Lucknow" },
-    { code: "BOM", city: "Mumbai"},
-    { code: "DEL", city: "Delhi"},
-    { code: "CCU", city: "Kolkata"},
-    { code: "LKO", city: "Lucknow"},
-    { code: "BLR", city: "Bengaluru"},
-    { code: "MAA", city: "Chennai"},
-    { code: "HYD", city: "Hyderabad"},
-    { code: "PNQ", city: "Pune"},
-    { code: "AMD", city: "Ahmedabad"},
-    { code: "GOI", city: "Goa"},
-    { code: "PAT", city: "Patna"},
-    { code: "JAI", city: "Jaipur"},
-    { code: "COK", city: "Kochi"},
-    { code: "IXB", city: "Bagdogra"},
-    { code: "TRV", city: "Thiruvananthapuram"},
-    { code: "IXC", city: "Chandigarh"},
-    { code: "BBI", city: "Bhubaneswar"},
-    { code: "IDR", city: "Indore"},
-    { code: "NAG", city: "Nagpur"},
+    { code: "BLR", city: "Bengaluru" },
+    { code: "MAA", city: "Chennai" },
+    { code: "HYD", city: "Hyderabad" },
+    { code: "PNQ", city: "Pune" },
+    { code: "AMD", city: "Ahmedabad" },
+    { code: "GOI", city: "Goa" },
+    { code: "PAT", city: "Patna" },
+    { code: "JAI", city: "Jaipur" },
+    { code: "COK", city: "Kochi" },
+    { code: "IXB", city: "Bagdogra" },
+    { code: "TRV", city: "Thiruvananthapuram" },
+    { code: "IXC", city: "Chandigarh" },
+    { code: "BBI", city: "Bhubaneswar" },
+    { code: "IDR", city: "Indore" },
+    { code: "NAG", city: "Nagpur" },
   ];
   const [activeTab, setActiveTab] = useState("flights");
   const [showTravellerDropdown, setShowTravellerDropdown] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
 
-  // Each flight object now has: { from: "", to: "", date: null }
-  // so we can store city & picked date per row
-  const [flights, setFlights] = useState([{ from: "", to: "", date: null }]);
+  // Each flight object now has: { from: "", to: "", date: null, fromText: "", toText: "" }
+  const [flights, setFlights] = useState([{ from: "", to: "", date: null, fromText: "", toText: "" }]);
 
-  // Unused local states from your original code
-  // (kept here so we don't remove anything):
+  // Unused local states from your original code (kept here so we don't remove anything):
   const [city, setCity] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
-
-  // Format a Date into "YYYY-MM-DD"
-  // function formatDate(inputDate) {
-  //   const date = new Date(inputDate);
-  //   return date.toISOString().split("T")[0] + "T00: 00: 00";
-  // }
-  
-
+  // Helper to filter suggestions:
   const getFilteredSuggestions = (typed) => {
     if (!typed) return [];
     const lower = typed.toLowerCase();
@@ -74,7 +57,8 @@ const Book = () => {
         item.code.toLowerCase().includes(lower)
     );
   };
-  // This is your original function that updates flights[] & source/destination:
+
+  // This function updates flights[] & source/destination in context:
   const handleFlightChange = (index, field, value) => {
     const updatedFlights = [...flights];
     updatedFlights[index][field] = value;
@@ -94,18 +78,16 @@ const Book = () => {
       setDestination(updatedDestination);
     }
 
+    // If the user changed the "date" field, update the date array in context:
     if (field === "date") {
       const updatedDate = [...date];
       updatedDate[index] = value;
       setDate(updatedDate);
     }
-
-    // If the user changed the "date" field, we do NOT alter source/destination directly
-    // because those arrays are for city info. So no additional logic needed here.
   };
-
+  // Add flight row:
   const addFlight = () => {
-    // Get both code and text from the last flight
+    // Grab 'to' from the last flight so the next flight's "from" can default to that
     const lastTo = flights[flights.length - 1]?.to || "";
     const lastToText = flights[flights.length - 1]?.toText || "";
 
@@ -113,29 +95,46 @@ const Book = () => {
       ...flights,
       {
         from: lastTo,
-        fromText: lastToText, // if you’re storing city text
+        fromText: lastToText,
         to: "",
         toText: "",
         date: null,
       },
     ]);
 
-    // Update source/destination arrays so they remain in sync
+    // Keep source/destination arrays in sync
     setSource([...source, lastTo]);
     setDestination([...destination, ""]);
   };
+  // New: Remove flight row
+  const removeFlight = (index) => {
+    const updatedFlights = flights.filter((_, i) => i !== index);
+    setFlights(updatedFlights);
 
-  // Increment or decrement travellers:
+    // Also remove corresponding entries in source and destination
+    const updatedSource = source.filter((_, i) => i !== index);
+    const updatedDestination = destination.filter((_, i) => i !== index);
+    setSource(updatedSource);
+    setDestination(updatedDestination);
+
+    // Also remove corresponding entry in date array
+    const updatedDate = date.filter((_, i) => i !== index);
+    setDate(updatedDate);
+  };
+
+  // Increment travellers:
   const incrementTraveller = (type) => {
     setTravellers({ ...travellers, [type]: travellers[type] + 1 });
   };
+
+  // Decrement travellers:
   const decrementTraveller = (type) => {
     if (travellers[type] > 0) {
       setTravellers({ ...travellers, [type]: travellers[type] - 1 });
     }
   };
 
-  // Select a travel class:
+  // Travel class selection:
   const selectClass = (selectedClass) => {
     setTravellers({
       ...travellers,
@@ -152,6 +151,7 @@ const Book = () => {
       className="text-gray-500 cursor-pointer hover:text-gray-700"
     />
   ));
+
   return (
     <div className="h-[100vh] bg-[#DDDDDD] flex flex-col items-center justify-between">
       {/* Header, Tabs, etc. */}
@@ -173,27 +173,15 @@ const Book = () => {
       {/* Main white container */}
       <div className="bg-white shadow-lg absolute top-[12rem] rounded-custom-40 px-8 pt-8 w-3/4 pl-20 pr-20 z-50 mb-20">
         {flights.map((flight, index) => {
-          // We'll reference flight.fromText, flight.toText, flight.date
-          const { fromText, toText, date } = flight;
+          const { fromText, toText } = flight;
 
           // Filter suggestions for "from"
           const fromFiltered = getFilteredSuggestions(fromText);
           // Filter suggestions for "to"
           const toFiltered = getFilteredSuggestions(toText);
 
-          // cityVal = the typed city in "from"
-          const city = flight.from || "";
-          // dateVal = the selected date object
-          // const dateVal = flight.date || null;
-
-          // Show city + date in the single input
-          // const combinedVal = dateVal
-          //   ? `${city}, ${dateVal}`
-          //   : city;
-          const combinedVal = city;
-
           return (
-            <div key={index} className="flex flex-col mb-4">
+            <div key={index} className="flex flex-col mb-4 border-b pb-4">
               {/* FROM */}
               <div className="relative w-full mb-2">
                 <label className="absolute -top-2 left-3 bg-white px-1 text-sm text-black font-bold">
@@ -202,7 +190,8 @@ const Book = () => {
                 <input
                   type="text"
                   placeholder="Type city or code"
-                  value={combinedVal}
+                  // FIX: show typed text from "fromText" 
+                  value={flight.fromText || ""}
                   onChange={(e) =>
                     handleFlightChange(index, "fromText", e.target.value)
                   }
@@ -213,7 +202,7 @@ const Book = () => {
                 <div className="absolute right-3 top-3 cursor-pointer">
                   <input
                     type="date"
-                    value={flight.date} // Ensure flight.date is in "YYYY-MM-DD" format
+                    value={flight.date || ""}
                     onChange={(e) =>
                       handleFlightChange(index, "date", e.target.value)
                     }
@@ -253,7 +242,8 @@ const Book = () => {
                 <input
                   type="text"
                   placeholder="Type city or code"
-                  value={flight.to}
+                  // FIX: show typed text from "toText"
+                  value={flight.toText || ""}
                   onChange={(e) =>
                     handleFlightChange(index, "toText", e.target.value)
                   }
@@ -284,9 +274,21 @@ const Book = () => {
                   </div>
                 )}
               </div>
+
+              {/* Remove Flight Button */}
+              <div className="mt-4 flex justify-end">
+                {/* You asked NOT to remove any other button, only to ADD this. */}
+                <button
+                  className="text-red-500 hover:text-red-700 font-bold"
+                  onClick={() => removeFlight(index)}
+                >
+                  Remove Flight
+                </button>
+              </div>
             </div>
           );
         })}
+
         {/* Button to add another flight */}
         <div className="flex justify-center w-full mt-4 mb-4">
           <button
@@ -331,7 +333,8 @@ const Book = () => {
               >
                 <path
                   fillRule="evenodd"
-                  d="M5.293 7.707a1 1 0 011.414 0L10 11.414l3.293-3.707a1 1 0 111.414 1.414l-4 4a1 1 0 
+                  d="M5.293 7.707a1 1 0 011.414 0L10 11.414l3.293-3.707a1 1 0 
+                    111.414 1.414l-4 4a1 1 0 
                     01-1.414 0l-4-4a1 1 0 010-1.414z"
                   clipRule="evenodd"
                 />
