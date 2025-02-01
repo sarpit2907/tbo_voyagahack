@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 const genAI = new GoogleGenerativeAI(
-  "AIzaSyBF65h3qw9tynSZUVb99_E9vNIbqK_uQRY"
+  process.env.GOOGLE_API_KEY,
 );
 // const express = require("express");
 // const fetch = require("node-fetch");
