@@ -1233,12 +1233,6 @@ const fetchHotels = async (airportCode, index = 0) => {
               <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded-md flex items-center">
                 {hotel.HotelRating || "N/A"} ★ Hotel
               </span>
-              <div className="text-sm text-gray-500 flex items-center">
-                <span>{hotel.Reviews || "N/A"} Ratings | </span>
-                <span className="ml-1 bg-green-600 text-white px-2 py-0.5 rounded-md text-xs font-bold">
-                  {hotel.Rating || "N/A"}/5
-                </span>
-              </div>
             </div>
 
             {/* Hotel Name & Address */}
@@ -1259,10 +1253,10 @@ const fetchHotels = async (airportCode, index = 0) => {
             <div className="flex justify-between items-end mt-4">
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  ₹{hotel.Rooms?.[0]?.TotalFare || "N/A"}
+                  ₹{(hotel.Rooms?.[0]?.TotalFare)*100 || "N/A"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  + ₹{hotel.Rooms?.[0]?.TotalTax || "N/A"} taxes & fees per night
+                  + ₹{(hotel.Rooms?.[0]?.TotalTax)*100 || "N/A"} taxes & fees per night
                 </p>
               </div>
               <div className="flex flex-col space-y-2">
@@ -1270,7 +1264,7 @@ const fetchHotels = async (airportCode, index = 0) => {
                   View Plans
                 </button>
                 <button className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-medium" onClick={() => {
-                                    increaseCost(hotel.Rooms?.[0]?.TotalFare + hotel.Rooms?.[0]?.TotalTax);
+                                    increaseCost((hotel.Rooms?.[0]?.TotalFare)*100 + (hotel.Rooms?.[0]?.TotalTax)*100);
                                   }}>
                   ADD TO TRIP
                 </button>
