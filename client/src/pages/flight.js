@@ -20,7 +20,7 @@ const Flight = () => {
 
   // const getResult = async (query) => {
   //   try {
-  //     const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/ai", {
+  //     const response = await fetch("http://localhost:3001/api/ai", {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/json",
@@ -149,6 +149,31 @@ const Flight = () => {
       ],
     },
   ];
+  const filterSightSections = [
+    {
+      items: [
+        { label: "Art Gallery", value: "ArtGallery" },
+        { label: "Garden & Park", value: "GardenandPark" },
+        { label: "Amusement & Theme Park", value: "Amusement&Theme Park" },
+        { label: "Forts & Palaces", value: "Forts&Palaces" },
+        { label: "Hills & Valleys", value: "Hills&Valleys" },
+        { label: "Temple", value: "Temple" },
+        { label: "Lake", value: "Lake" },
+        { label: "Museum", value: "Museum" },
+        { label: "Waterfall", value: "Waterfall" },
+        { label: "Commercial Street", value: "CommercialStreet" },
+        { label: "Shopping Market", value: "ShoppingMarket" },
+        { label: "Monument", value: "Monument" },
+        { label: "National Park", value: "NationalPark" },
+        { label: "Yoga & Meditation", value: "Yoga&Meditation" },
+        { label: "Buddhist Temple", value: "BuddhistTemple" },
+        { label: "Planetarium", value: "Planetarium" },
+        { label: "Church & Cathedral", value: "Church&Cathedral" },
+        { label: "Aquarium", value: "Aquarium" },
+        { label: "Adventure Zone", value: "AdventureZone" },
+      ]
+    },
+  ];
   const [expandedSections, setExpandedSections] = useState(() => {
     const expanded = {};
     filterSections.forEach((sec) => {
@@ -168,7 +193,7 @@ const Flight = () => {
       const responses = await Promise.all(
         flights.map(async (leg) => {
           const response = await fetch(
-            "https://tbo-voyagahack-server.vercel.app/api/searchFlights",
+            "http://localhost:3001/api/searchFlights",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -314,7 +339,7 @@ const Flight = () => {
     setError(null);
   
     try {
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
+      const response = await fetch("http://localhost:3001/api/searchFlights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -339,7 +364,8 @@ const Flight = () => {
       });
   
       const jsonData = await response.json();
-  
+      console.log(jsonData);
+      
       // ✅ Prevents TypeError by checking if Results exists and is an array
       if (!jsonData?.Response?.Results || !Array.isArray(jsonData.Response.Results)) {
         console.error("Invalid API response format:", jsonData);
@@ -370,7 +396,7 @@ const Flight = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchFlights", {
+      const response = await fetch("http://localhost:3001/api/searchFlights", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -416,7 +442,7 @@ const Flight = () => {
   const fetchCityId = async (cityName) => {
     try {
         const response = await fetch(
-            "https://tbo-voyagahack-server.vercel.app/api/citySearch",
+            "http://localhost:3001/api/citySearch",
             {
                 method: "POST",
                 headers: {
@@ -450,7 +476,7 @@ const Flight = () => {
 // Fetch hotel codes (only first 10)
 const fetchHotelCodes = async (cityID) => {
     try {
-        const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/hotelcodeSearch", {
+        const response = await fetch("http://localhost:3001/api/hotelcodeSearch", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -483,7 +509,7 @@ const fetchHotelDetails = async (hotelCodes) => {
 
       // Fetch details one by one (API only accepts one hotel at a time)
       const hotelDetailsPromises = hotelCodes.map(async (code) => {
-          const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/HotelDetails", {
+          const response = await fetch("http://localhost:3001/api/HotelDetails", {
               method: "POST",
               headers: {
                   "Content-Type": "application/json",
@@ -560,7 +586,7 @@ const fetchHotels = async (airportCode, index = 0) => {
 
       console.log(`Fetching availability for hotels on ${checkInDate.toISOString().split("T")[0]}`);
 
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/searchHotels", {
+      const response = await fetch("http://localhost:3001/api/searchHotels", {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
@@ -639,7 +665,7 @@ const fetchHotels = async (airportCode, index = 0) => {
       console.log(`Fetched CityId: ${cityId} for ${cityName}`);
 
       const response = await fetch(
-        "https://tbo-voyagahack-server.vercel.app/api/searchSights",
+        "http://localhost:3001/api/searchSights",
         {
           method: "POST",
           headers: {
@@ -1356,7 +1382,7 @@ const fetchHotels = async (airportCode, index = 0) => {
               {/* Main Layout */}
               <div className="flex w-3/4 h-auto mt-5 space-x-5 mb-5">
                 {/* Sidebar Filters */}
-                <div className="w-1/5 h-[138vh] bg-white rounded-lg pl-3 pr-4 font-semibold text-gray-700">
+                <div className="w-1/5 h-[100vh] bg-white rounded-lg pl-3 pr-4 font-semibold text-gray-700">
                   <div className="flex justify-between items-center p-3 border-b border-gray-200">
                     <span className="text-lg">FILTERS</span>
                     <button
@@ -1367,37 +1393,19 @@ const fetchHotels = async (airportCode, index = 0) => {
                     </button>
                   </div>
                   <div className="p-2 space-y-3 text-sm font-normal">
-                    {filterSections.map((section) => (
-                      <div key={section.title}>
-                        <div
-                          onClick={() => toggleSection(section.title)}
-                          className="flex justify-between items-center cursor-pointer font-semibold"
-                        >
-                          <span>{section.title}</span>
-                          <span className="text-xl">
-                            {expandedSections[section.title] ? "▼" : "▶️"}
-                          </span>
-                        </div>
+                  {filterSightSections.flatMap((section) => 
+  section.items.map((item) => (
+    <label key={item.value} className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        checked={selectedFilters[item.value] || false}
+        onChange={() => toggleFilter(item.value)}
+      />
+      <span>{item.label}</span>
+    </label>
+  ))
+)}
 
-                        {expandedSections[section.title] && (
-                          <div className="mt-2 ml-2 space-y-1">
-                            {section.items.map((item) => (
-                              <label
-                                key={item.value}
-                                className="flex items-center space-x-2"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedFilters[item.value] || false}
-                                  onChange={() => toggleFilter(item.value)}
-                                />
-                                <span>{item.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 </div>
 

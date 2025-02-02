@@ -4,15 +4,22 @@ import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 const Trip = () => {
   const { prompt, setPrompt, result, setResult,isChatOpen, setIsChatOpen } = useDetails();
   const [footerHeight, setFooterHeight] = useState(0);
+  const [debouncedPrompt, setDebouncedPrompt] = useState("");
   const textareaRef = useRef(null);
   const tripRef = useRef(null);
   const footerRef = useRef(null);
   useEffect(() => {
-    console.log("Prompt in Trip.js Updated:", prompt);
+    const handler = setTimeout(() => {
+      setDebouncedPrompt(prompt); // Update only after user stops typing for 500ms
+    }, 500); 
+  
+    return () => clearTimeout(handler); // Cleanup timeout if user types again
   }, [prompt]);
   useEffect(() => {
-    console.log("Updated Result:", result);
-  }, [result]);
+    if (debouncedPrompt) {
+      getResult(debouncedPrompt); // Call API only when user stops typing
+    }
+  }, [debouncedPrompt]);
   useEffect(() => {
     if (prompt) {
       console.log("Fetching AI response for:", prompt);
@@ -52,7 +59,7 @@ const Trip = () => {
 
   const getResult = async (query) => {
     try {
-      const response = await fetch("https://tbo-voyagahack-server.vercel.app/api/ai", {
+      const response = await fetch("http://localhost:3001/api/ai", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,14 +110,14 @@ const Trip = () => {
           </div>
   
           {/* Chat Input Field */}
-          <textarea
-            className="w-full p-2 border-b border-gray-300 focus:outline-none resize-none text-gray-800"
-            onChange={(e) => setPrompt(e.target.value)}
-            value={prompt}
-            placeholder="Ask something..."
-            rows="1"
-            ref={textareaRef}
-          />
+         <textarea
+    className="w-full p-2 border-b border-gray-300 focus:outline-none resize-none text-gray-800"
+    onChange={(e) => setPrompt(e.target.value)}
+    value={prompt}
+    placeholder="Ask something..."
+    rows="1"
+    ref={textareaRef}
+  />
   
           {/* Chat Response Box */}
           <div className="overflow-y-auto max-h-60 w-full p-3 text-gray-700">
