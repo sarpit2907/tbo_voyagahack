@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // If you're using the Google Generative AI client:
-const genAI = new GoogleGenerativeAI("AIzaSyBF65h3qw9tynSZUVb99_E9vNIbqK_uQRY");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Variables for TBO API
 const TBO_API_BASE_URL = "http://api.tbotechnology.in/TBOHolidays_HotelAPI";
